@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --accent: #1d9e75;
+    --background: #14111a;
+    --surface: #14111a;
+    --border: #1e2d45;
+    --teal: #1d9e75;
+    --teal-dim: #24b888;
+    --foreground: #f0f4ff;
+    --muted: #8892a4;
+    --danger: #ff4d6d;
+    --warn: #ffb830;
+    --green: #22d68a;
+  }
+
+  body {
+    /* @apply bg-background text-foreground; */
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  ::selection {
+    background: rgba(29, 158, 117, 0.2);
+    color: #f0f4ff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0b1120;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1e2d45;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #1d9e75;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.bg-teal {
+  background-color: var(--accent);
+}
+
+.text-teal {
+  color: var(--teal-dim);
+}
+
+.btn-hover {
+  box-shadow: 0 8px 28px rgba(29, 158, 117, 0.2);
+  transition: box-shadow 0.3s ease-in-out;
+}
