@@ -13,8 +13,8 @@ import {
   Globe,
   Shield,
 } from "lucide-react";
-import { Product } from "@prisma/client";
-import { Seller } from "@/types";
+// import { } from "@prisma/client";
+import { Product, Seller } from "@/types";
 
 async function getFeaturedProducts(): Promise<
   (Product & { seller: Seller })[]
