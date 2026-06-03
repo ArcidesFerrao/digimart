@@ -13,13 +13,18 @@ import {
   Globe,
   Shield,
 } from "lucide-react";
+import { Product } from "@prisma/client";
+import { Seller } from "@/types";
 
-async function getFeaturedProducts() {
+async function getFeaturedProducts(): Promise<
+  (Product & { seller: Seller })[]
+> {
   return prisma.product.findMany({
     where: { isActive: true },
     include: {
       seller: {
         select: {
+          bio: true,
           id: true,
           name: true,
           username: true,
