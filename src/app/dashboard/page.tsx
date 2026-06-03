@@ -13,8 +13,9 @@ import {
   TrendingUp,
   Store,
 } from "lucide-react";
+import { Product } from "@/types";
 
-async function getSellerProducts(userId: string) {
+async function getSellerProducts(userId: string): Promise<Product[]> {
   return prisma.product.findMany({
     where: { sellerId: userId },
     include: {
