@@ -9,6 +9,7 @@ const registerSchema = z.object({
   password: z.string().min(6),
   username: z.string().min(3),
   whatsapp: z.string().min(9),
+  bio: z.string().min(10),
 });
 
 export async function POST(req: NextRequest) {
