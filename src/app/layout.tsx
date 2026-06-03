@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   title: "DigiMart — Marketplace de Produtos Digitais",
   description:
     "Marketplace de produtos digitais para criadores moçambicanos. Venda e compre eBooks, templates, cursos e mais.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

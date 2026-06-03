@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -23,8 +24,14 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <ShoppingBag className="h-6 w-6 text-teal" />
-            <span className="font-bebas text-2xl tracking-wider text-foreground">
+            <Image
+              src="/favicon.png"
+              alt="DigiMart Logo"
+              width={32}
+              height={32}
+            />
+            {/* <ShoppingBag className="h-6 w-6 text-teal" /> */}
+            <span className="font-bebas text-4xl tracking-wider text-foreground">
               DIGI<span className="text-teal">MART</span>
             </span>
           </Link>
