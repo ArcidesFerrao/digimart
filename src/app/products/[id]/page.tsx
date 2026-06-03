@@ -14,6 +14,7 @@ import {
   Tag,
   ExternalLink,
 } from "lucide-react";
+import { ProductWithSeller } from "@/types";
 // import type { Category } from "@prisma/client/edge";
 type Category = "EBOOK" | "TEMPLATE" | "COURSE" | "OTHER";
 async function getProduct(id: string) {
@@ -34,7 +35,10 @@ async function getProduct(id: string) {
   });
 }
 
-async function getRelatedProducts(category: Category, excludeId: string) {
+async function getRelatedProducts(
+  category: Category,
+  excludeId: string,
+): Promise<ProductWithSeller[]> {
   return prisma.product.findMany({
     where: {
       category,
