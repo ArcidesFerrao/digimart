@@ -14,6 +14,7 @@ import {
   Store,
 } from "lucide-react";
 import { Product } from "@/types";
+import { DeleteProductButton } from "@/components/ui/delete-product-btn";
 
 async function getSellerProducts(userId: string): Promise<Product[]> {
   return prisma.product.findMany({
@@ -215,7 +216,8 @@ export default async function DashboardPage() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <form
+                        <DeleteProductButton productId={product.id} />
+                        {/* <form
                           action={`/api/products/${product.id}`}
                           method="DELETE"
                           onSubmit={async (e) => {
@@ -240,7 +242,7 @@ export default async function DashboardPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </form>
+                        </form> */}
                       </div>
                     </td>
                   </tr>
