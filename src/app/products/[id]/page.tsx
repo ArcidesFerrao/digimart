@@ -14,7 +14,7 @@ import {
   Tag,
   ExternalLink,
 } from "lucide-react";
-import { Category } from "@prisma/client";
+import type { Category } from "@prisma/client";
 
 async function getProduct(id: string) {
   return prisma.product.findUnique({
