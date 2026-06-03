@@ -1,7 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
+
+import {db} from "@/lib/prisma"
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 async function main() {
   // Criar vendedor de exemplo
