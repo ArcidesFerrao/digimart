@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/prisma";
 
+type Params = Promise<{ id: string }>
+
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Params }
 ) {
+  const id = (await params).id;
   const product = await prisma.product.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       seller: {
         select: {
@@ -30,12 +33,14 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Params }
 ) {
   try {
+  const id = (await params).id;
+
     const body = await req.json();
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
     });
     return NextResponse.json(product);
@@ -46,11 +51,12 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Params }
 ) {
   try {
+    const id = (await params).id;
     await prisma.product.delete({
-      where: { id: params.id },
+      where: { id },
     });
     return NextResponse.json({ success: true });
   } catch (error) {

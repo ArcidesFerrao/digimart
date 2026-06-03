@@ -34,12 +34,11 @@ async function getSeller(username: string) {
   });
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { username: string };
-}) {
-  const seller = await getSeller(params.username);
+type Params = Promise<{ username: string }>;
+
+export async function generateMetadata({ params }: { params: Params }) {
+  const { username } = await params;
+  const seller = await getSeller(username);
   if (!seller) return { title: "Vendedor não encontrado" };
   return {
     title: `${seller.name} — DigiMart`,
@@ -47,12 +46,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function SellerPage({
-  params,
-}: {
-  params: { username: string };
-}) {
-  const seller = await getSeller(params.username);
+export default async function SellerPage({ params }: { params: Params }) {
+  const { username } = await params;
+  const seller = await getSeller(username);
 
   if (!seller) {
     notFound();

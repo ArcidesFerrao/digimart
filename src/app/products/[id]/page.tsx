@@ -72,8 +72,10 @@ const categoryVariants: Record<string, "teal" | "warn" | "green" | "default"> =
     OTHER: "default",
   };
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+type Params = Promise<{ id: string }>;
+export async function generateMetadata({ params }: { params: Params }) {
+  const { id } = await params;
+  const product = await getProduct(id);
   if (!product) return { title: "Produto não encontrado" };
   return {
     title: `${product.title} — DigiMart`,
@@ -84,9 +86,10 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Params;
 }) {
-  const product = await getProduct(params.id);
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
     notFound();

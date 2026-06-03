@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,12 @@ interface Product {
   isActive: boolean;
 }
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
@@ -41,12 +46,12 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     fetchProduct();
-  }, [params.id]);
+  }, [id]);
 
   async function fetchProduct() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/products/${params.id}`);
+      const res = await fetch(`/api/products/${id}`);
       if (!res.ok) {
         toast.error("Produto não encontrado");
         router.push("/dashboard");
@@ -73,7 +78,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) {
     const value =
       e.target.type === "checkbox"
@@ -90,7 +95,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     setSaving(true);
 
     try {
-      const res = await fetch(`/api/products/${params.id}`, {
+      const res = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -217,7 +222,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             onChange={handleChange}
             className="w-5 h-5 rounded border-border bg-background text-teal focus:ring-teal"
           />
-          <label htmlFor="isActive" className="text-sm text-foreground cursor-pointer">
+          <label
+            htmlFor="isActive"
+            className="text-sm text-foreground cursor-pointer"
+          >
             Produto activo (visível na plataforma)
           </label>
         </div>
@@ -283,7 +291,9 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileUp className="h-5 w-5 text-teal" />
-                <span className="text-sm text-foreground">Ficheiro carregado</span>
+                <span className="text-sm text-foreground">
+                  Ficheiro carregado
+                </span>
               </div>
               <button
                 type="button"
@@ -330,8 +340,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           <Button type="submit" size="lg" className="flex-1" disabled={saving}>
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                A guardar...
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />A guardar...
               </>
             ) : (
               "Guardar Alterações"

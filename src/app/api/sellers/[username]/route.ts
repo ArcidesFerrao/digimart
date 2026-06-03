@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db as  prisma } from "@/lib/prisma";
 
+type Params = Promise<{ username: string }>
+
+
 export async function GET(
   req: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Params }
 ) {
+  const username = (await params).username;
   const seller = await prisma.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     select: {
       id: true,
       name: true,
