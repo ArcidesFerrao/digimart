@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
+import { auth } from "@/lib/auth";
 
-export function Footer() {
+export async function Footer() {
+  const session = await auth();
+
   return (
     <footer className="border-t border-border bg-surface mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -26,20 +29,40 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/products" className="text-sm text-muted hover:text-teal transition-colors">
+                <Link
+                  href="/products"
+                  className="text-sm text-muted hover:text-teal transition-colors"
+                >
                   Produtos
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-sm text-muted hover:text-teal transition-colors">
+                <Link
+                  href="/about"
+                  className="text-sm text-muted hover:text-teal transition-colors"
+                >
                   Sobre
                 </Link>
               </li>
-              <li>
-                <Link href="/auth/register" className="text-sm text-muted hover:text-teal transition-colors">
-                  Tornar-se Vendedor
-                </Link>
-              </li>
+              {session?.user ? (
+                <li>
+                  <Link
+                    href="/dashboard"
+                    className="text-sm text-muted hover:text-teal transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                </li>
+              ) : (
+                <li>
+                  <Link
+                    href="/auth/register"
+                    className="text-sm text-muted hover:text-teal transition-colors"
+                  >
+                    Tornar-se Vendedor
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -60,9 +83,7 @@ export function Footer() {
           <p className="text-xs text-muted font-mono">
             by Evolure Labs · MVP v1.0 · 2026
           </p>
-          <p className="text-xs text-muted">
-            Todos os direitos reservados.
-          </p>
+          <p className="text-xs text-muted">Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>
