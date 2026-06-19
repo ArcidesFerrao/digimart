@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Product } from "@/types";
 import { DeleteProductButton } from "@/components/ui/delete-product-btn";
+import { CopyFileLinkButton } from "@/components/ui/copyFileButton";
 
 async function getSellerProducts(userId: string): Promise<Product[]> {
   return prisma.product.findMany({
@@ -198,6 +199,7 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <CopyFileLinkButton fileUrl={product.fileUrl} />
                         <Link href={`/products/${product.id}`}>
                           <Button
                             variant="ghost"

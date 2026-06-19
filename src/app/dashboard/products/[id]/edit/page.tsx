@@ -291,9 +291,16 @@ export default function EditProductPage({
             <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileUp className="h-5 w-5 text-teal" />
-                <span className="text-sm text-foreground">
-                  Ficheiro carregado
-                </span>
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-teal hover:underline"
+                >
+                  <span className="text-sm text-foreground">
+                    Ficheiro carregado
+                  </span>
+                </a>
               </div>
               <button
                 type="button"

@@ -74,14 +74,23 @@ export async function Footer() {
             <ul className="space-y-2">
               <li className="text-sm text-muted">Moeda: MZN (Metical)</li>
               <li className="text-sm text-muted">Idioma: Português</li>
-              <li className="text-sm text-muted">Pagamento: M-Pesa, e-Mola</li>
+              {/* <li className="text-sm text-muted">Pagamento: M-Pesa, e-Mola</li> */}
             </ul>
           </div>
         </div>
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted font-mono">
-            by Evolure Labs · MVP v1.0 · 2026
+            by{" "}
+            <a
+              href="https://evolurelabs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal hover:underline"
+            >
+              Evolure Labs
+            </a>{" "}
+            · MVP v1.0 · 2026
           </p>
           <p className="text-xs text-muted">Todos os direitos reservados.</p>
         </div>
