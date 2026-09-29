@@ -12,12 +12,11 @@ import {
   Trash2,
   TrendingUp,
   Store,
+  Link2,
+  Download,
 } from "lucide-react";
-import { Product } from "@/types";
-import { DeleteProductButton } from "@/components/ui/delete-product-btn";
-import { CopyFileLinkButton } from "@/components/ui/copyFileButton";
 
-async function getSellerProducts(userId: string): Promise<Product[]> {
+async function getSellerProducts(userId: string) {
   return prisma.product.findMany({
     where: { sellerId: userId },
     include: {
@@ -30,8 +29,18 @@ async function getSellerProducts(userId: string): Promise<Product[]> {
           avatar: true,
         },
       },
+      _count: { select: { downloadLinks: true } },
     },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+async function getRecentDownloadLinks(userId: string) {
+  return prisma.downloadLink.findMany({
+    where: { sellerId: userId },
+    include: { product: { select: { title: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
   });
 }
 
@@ -47,6 +56,7 @@ export default async function DashboardPage() {
   if (!session?.user) return null;
 
   const products = await getSellerProducts(session.user.id);
+  const recentLinks = await getRecentDownloadLinks(session.user.id);
   const activeProducts = products.filter((p) => p.isActive);
   const inactiveProducts = products.filter((p) => !p.isActive);
 
@@ -77,41 +87,62 @@ export default async function DashboardPage() {
             <Package className="h-5 w-5 text-teal" />
             <span className="text-sm text-muted">Total</span>
           </div>
-          <p className="font-bebas text-3xl text-foreground">
-            {products.length}
-          </p>
+          <p className="font-bebas text-3xl text-foreground">{products.length}</p>
         </div>
         <div className="bg-surface border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
             <Eye className="h-5 w-5 text-green" />
             <span className="text-sm text-muted">Activos</span>
           </div>
-          <p className="font-bebas text-3xl text-green">
-            {activeProducts.length}
-          </p>
+          <p className="font-bebas text-3xl text-green">{activeProducts.length}</p>
         </div>
         <div className="bg-surface border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp className="h-5 w-5 text-warn" />
             <span className="text-sm text-muted">Inactivos</span>
           </div>
-          <p className="font-bebas text-3xl text-warn">
-            {inactiveProducts.length}
-          </p>
+          <p className="font-bebas text-3xl text-warn">{inactiveProducts.length}</p>
         </div>
         <div className="bg-surface border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
-            <Store className="h-5 w-5 text-teal" />
-            <span className="text-sm text-muted">Loja</span>
+            <Link2 className="h-5 w-5 text-teal" />
+            <span className="text-sm text-muted">Links</span>
           </div>
-          <Link
-            href={`/sellers/${session.user.username}`}
-            className="text-sm text-teal hover:underline"
-          >
-            Ver público
-          </Link>
+          <p className="font-bebas text-3xl text-teal">{recentLinks.length}</p>
         </div>
       </div>
+
+      {/* Recent Download Links */}
+      {recentLinks.length > 0 && (
+        <div className="bg-surface border border-border rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-teal" />
+              Links de Download Recentes
+            </h3>
+            <Link href="/dashboard/links">
+              <Button variant="ghost" size="sm">Ver todos</Button>
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {recentLinks.map((link) => (
+              <div key={link.id} className="flex items-center justify-between bg-background rounded-lg p-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{link.product.title}</p>
+                  <p className="text-xs text-muted">
+                    {link.buyerName || link.buyerPhone || "Sem comprador"} · {" "}
+                    {link.downloadCount}/{link.maxDownloads} downloads · {" "}
+                    Expira: {new Date(link.expiresAt).toLocaleDateString("pt-MZ")}
+                  </p>
+                </div>
+                <Badge variant={link.isActive ? "green" : "default"}>
+                  {link.isActive ? "Activo" : "Inactivo"}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Products Table */}
       {products.length === 0 ? (
@@ -168,13 +199,18 @@ export default async function DashboardPage() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="font-medium text-foreground text-sm truncate max-w-[200px]">
-                          {product.title}
-                        </span>
+                        <div>
+                          <span className="font-medium text-foreground text-sm truncate max-w-[200px] block">
+                            {product.title}
+                          </span>
+                          <span className="text-xs text-muted">
+                            {product._count.downloadLinks} links
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant="default">
+                      <Badge variant="default" size="sm">
                         {categoryLabels[product.category] || product.category}
                       </Badge>
                     </td>
@@ -199,40 +235,24 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <CopyFileLinkButton fileUrl={product.fileUrl} />
                         <Link href={`/products/${product.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/products/${product.id}/edit`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <DeleteProductButton productId={product.id} />
-                        {/* <form
+                        <form
                           action={`/api/products/${product.id}`}
                           method="DELETE"
                           onSubmit={async (e) => {
                             e.preventDefault();
-                            if (
-                              !confirm(
-                                "Tens a certeza que queres eliminar este produto?",
-                              )
-                            )
+                            if (!confirm("Tens a certeza que queres eliminar este produto?"))
                               return;
-                            await fetch(`/api/products/${product.id}`, {
-                              method: "DELETE",
-                            });
+                            await fetch(`/api/products/${product.id}`, { method: "DELETE" });
                             window.location.reload();
                           }}
                         >
@@ -244,7 +264,7 @@ export default async function DashboardPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </form> */}
+                        </form>
                       </div>
                     </td>
                   </tr>

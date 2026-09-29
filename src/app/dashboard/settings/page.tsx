@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/lib/uploadthing";
-import { Loader2, User, ImageIcon } from "lucide-react";
+import { Loader2, User, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserData {
@@ -65,14 +65,17 @@ export default function SettingsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
+    if (!session?.user?.id) return;
 
+    setSaving(true);
     try {
-      const res = await fetch(`/api/users/${session?.user?.id}`, {
+      const res = await fetch(`/api/users/${session.user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          whatsapp: formData.whatsapp,
+          bio: formData.bio,
           avatar: avatar || null,
         }),
       });
@@ -205,23 +208,41 @@ export default function SettingsPage() {
           </label>
           <Textarea
             name="bio"
-            placeholder="Fala um pouco sobre ti..."
+            placeholder="Fala um pouco sobre ti e o que vendes..."
             value={formData.bio}
             onChange={handleChange}
             rows={4}
           />
         </div>
 
+        {/* Info */}
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <p className="text-sm text-muted">
+            <strong className="text-foreground">Username:</strong>{" "}
+            {session?.user?.username}
+          </p>
+          <p className="text-sm text-muted mt-1">
+            <strong className="text-foreground">Email:</strong>{" "}
+            {session?.user?.email}
+          </p>
+          <p className="text-xs text-muted mt-2">
+            O username e email não podem ser alterados.
+          </p>
+        </div>
+
         {/* Submit */}
         <div className="pt-4">
-          <Button type="submit" size="lg" className="w-full" disabled={saving}>
+          <Button type="submit" size="lg" className="w-full gap-2" disabled={saving}>
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 A guardar...
               </>
             ) : (
-              "Guardar Alterações"
+              <>
+                <Save className="h-4 w-4" />
+                Guardar Alterações
+              </>
             )}
           </Button>
         </div>

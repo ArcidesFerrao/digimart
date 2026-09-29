@@ -8,6 +8,8 @@ import {
   Plus,
   Settings,
   Store,
+  Link2,
+  AlertTriangle,
 } from "lucide-react";
 
 export default async function DashboardLayout({
@@ -21,27 +23,16 @@ export default async function DashboardLayout({
     redirect("/auth/login");
   }
 
+  if (!session.user.isVerified) {
+    redirect("/verify");
+  }
+
   const navItems = [
-    {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      href: "/dashboard/products/new",
-      label: "Novo Produto",
-      icon: Plus,
-    },
-    {
-      href: `/sellers/${session.user.username}`,
-      label: "Loja Pública",
-      icon: Store,
-    },
-    {
-      href: "/dashboard/settings",
-      label: "Configurações",
-      icon: Settings,
-    },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/products/new", label: "Novo Produto", icon: Plus },
+    { href: "/dashboard/links", label: "Links de Download", icon: Link2 },
+    { href: `/sellers/${session.user.username}`, label: "Loja Pública", icon: Store },
+    { href: "/dashboard/settings", label: "Configurações", icon: Settings },
   ];
 
   return (
@@ -57,6 +48,10 @@ export default async function DashboardLayout({
               <p className="font-semibold text-foreground truncate">
                 {session.user.name}
               </p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-2 h-2 rounded-full bg-green" />
+                <span className="text-xs text-green">Verificado</span>
+              </div>
             </div>
             <nav className="space-y-1">
               {navItems.map((item) => (

@@ -8,32 +8,55 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String    @unique
-  password  String
-  username  String    @unique
-  whatsapp  String
-  bio       String?
-  avatar    String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                  String         @id @default(cuid())
+  name                String
+  email               String         @unique
+  password            String
+  username            String         @unique
+  whatsapp            String
+  bio                 String?
+  avatar              String?
+  isVerified          Boolean        @default(false)
+  verificationCode    String?        @unique
+  verificationExpires DateTime?
+  isAdmin             Boolean        @default(false)
+  products            Product[]
+  downloadLinks       DownloadLink[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  price       Float
-  category    Category @default(OTHER)
-  coverImage  String
-  fileUrl     String?
-  isActive    Boolean  @default(true)
-  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  sellerId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String         @id @default(cuid())
+  title         String
+  description   String
+  price         Float
+  category      Category       @default(OTHER)
+  coverImage    String // Imagem principal (quadrada)
+  images        String[] // 3 imagens opcionais (qualquer tamanho)
+  fileUrl       String?
+  isActive      Boolean        @default(true)
+  seller        User           @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  sellerId      String
+  downloadLinks DownloadLink[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model DownloadLink {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sellerId      String
+  seller        User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  buyerPhone    String?
+  buyerName     String?
+  token         String   @unique @default(cuid())
+  expiresAt     DateTime
+  maxDownloads  Int      @default(3)
+  downloadCount Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
 }
 
 enum Category {

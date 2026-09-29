@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/prisma";
-
-type Params = Promise<{ id: string }>
+import { auth } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Params }
+  { params }:  { params: Promise<{ id: string }> }
 ) {
-  const id = (await params).id;
   const product = await prisma.product.findUnique({
-    where: { id },
+    where: { id: (await params).id },
     include: {
       seller: {
         select: {
@@ -33,16 +31,36 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Params }
+  { params }:  { params: Promise<{ id: string }> }
 ) {
   try {
-  const id = (await params).id;
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
 
     const body = await req.json();
+
+    // Check ownership
+    const existing = await prisma.product.findUnique({
+      where: { id: (await params).id },
+      select: { sellerId: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+    }
+
+    // Only seller or admin can update
+    if (existing.sellerId !== session.user.id && !session.user.isAdmin) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
+
     const product = await prisma.product.update({
-      where: { id },
+      where: { id: (await params).id },
       data: body,
     });
+
     return NextResponse.json(product);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
@@ -51,12 +69,29 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Params }
+  { params }:  { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = (await params).id;
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const existing = await prisma.product.findUnique({
+      where: { id: (await params).id },
+      select: { sellerId: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+    }
+
+    if (existing.sellerId !== session.user.id && !session.user.isAdmin) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
+
     await prisma.product.delete({
-      where: { id },
+      where: { id: (await params).id },
     });
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -12,26 +12,50 @@ Marketplace de produtos digitais para criadores moçambicanos — simples, local
 - **Upload de Ficheiros**: UploadThing
 - **Hosting**: Vercel
 
-## Funcionalidades MVP
+## Funcionalidades
 
+### MVP Completo
 - ✅ Registo e login de vendedores
+- ✅ **Verificação por código** — novo utilizador recebe código via WhatsApp/Email antes de poder vender
 - ✅ Criação e gestão de produtos digitais
+- ✅ **4 imagens por produto** — 1 capa principal (quadrada) + 3 adicionais (qualquer ratio)
+- ✅ Galeria de imagens na página do produto
 - ✅ Listagem pública de produtos com filtros
 - ✅ Página de detalhe do produto
-- ✅ Botão "Comprar via WhatsApp" com mensagem pré-preenchida
-- ✅ Dashboard do vendedor
+- ✅ **Dois fluxos de compra**:
+  - "Comprar via WhatsApp" — falar com vendedor para combinar
+  - "Já pagaste?" — confirmar pagamento M-Pesa/e-Mola e receber produto
+- ✅ **Links temporários de download** — vendedor gera link seguro no dashboard
+- ✅ Dashboard do vendedor com estatísticas
 - ✅ Perfil público do vendedor
+- ✅ Edição de perfil do vendedor
 - ✅ Landing page
 - ✅ Busca de produtos
 - ✅ Upload de imagens e ficheiros via UploadThing
+- ✅ **Página de administração** — gestão de utilizadores e produtos
 
-## Fluxo de Compra
+## Fluxos de Compra
 
-1. Comprador descobre o produto na plataforma
-2. Clica em "Comprar via WhatsApp"
-3. Vendedor recebe mensagem pré-preenchida no WhatsApp
+### Fluxo 1: WhatsApp Directo
+1. Comprador descobre o produto
+2. Clica "Comprar via WhatsApp"
+3. Vendedor recebe mensagem pré-preenchida
 4. Combinam pagamento (M-Pesa, e-Mola, transferência)
-5. Vendedor confirma e entrega o ficheiro
+5. Vendedor entrega o produto
+
+### Fluxo 2: Pagamento Primeiro
+1. Comprador vê o produto
+2. Efectua pagamento via M-Pesa/e-Mola para o número do vendedor
+3. Guarda o comprovativo
+4. Clica "Confirmar Pagamento no WhatsApp"
+5. Vendedor confirma e envia link de download
+
+### Fluxo 3: Link de Download (Vendedor)
+1. Vendedor vai ao Dashboard → Links de Download
+2. Selecciona o produto e preenche dados do comprador
+3. Gera link temporário (expira em 24-72h, limite de downloads)
+4. Envia link via WhatsApp ao comprador
+5. Comprador faz download seguro
 
 ## Setup
 
@@ -47,7 +71,7 @@ cp .env.example .env
 npx prisma generate
 npx prisma migrate dev
 
-# 4. Seed da base de dados (opcional)
+# 4. Seed da base de dados
 npx prisma db seed
 
 # 5. Correr em desenvolvimento
@@ -63,6 +87,13 @@ NEXTAUTH_SECRET="your-secret-key-here"
 UPLOADTHING_TOKEN="your-uploadthing-token"
 ```
 
+## Contas de Teste (Seed)
+
+| Tipo | Email | Password |
+|------|-------|----------|
+| Admin | admin@digimart.mz | password123 |
+| Vendedor | ana@digimart.mz | password123 |
+
 ## Estrutura do Projeto
 
 ```
@@ -77,18 +108,25 @@ digimart/
 │   │   │   ├── products/
 │   │   │   ├── sellers/
 │   │   │   ├── uploadthing/
-│   │   │   └── register/
+│   │   │   ├── register/
+│   │   │   ├── verify/
+│   │   │   ├── download/
+│   │   │   ├── users/
+│   │   │   └── admin/
 │   │   ├── auth/
 │   │   │   ├── login/
 │   │   │   └── register/
 │   │   ├── dashboard/
 │   │   │   ├── products/new/
 │   │   │   ├── products/[id]/edit/
+│   │   │   ├── links/
 │   │   │   └── settings/
 │   │   ├── products/
 │   │   │   └── [id]/
 │   │   ├── sellers/
 │   │   │   └── [username]/
+│   │   ├── verify/
+│   │   ├── admin/
 │   │   ├── about/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
@@ -118,25 +156,32 @@ digimart/
 ### Públicas
 - `/` — Landing page
 - `/products` — Listagem de produtos
-- `/products/[id]` — Detalhe do produto
+- `/products/[id]` — Detalhe do produto (com galeria)
 - `/sellers/[username]` — Perfil público do vendedor
 - `/about` — Sobre a plataforma
 
-### Autenticadas (Vendedor)
+### Autenticação
 - `/auth/login` — Login
 - `/auth/register` — Registo
+- `/verify` — Verificação de conta (código)
+
+### Vendedor (requer verificação)
 - `/dashboard` — Painel do vendedor
-- `/dashboard/products/new` — Criar produto
+- `/dashboard/products/new` — Criar produto (4 imagens)
 - `/dashboard/products/[id]/edit` — Editar produto
+- `/dashboard/links` — Gerar links de download
 - `/dashboard/settings` — Configurações do perfil
+
+### Admin (requer isAdmin)
+- `/admin` — Painel de administração
 
 ## Próximos Passos
 
-- Integração com M-Pesa API
+- Integração com API M-Pesa
+- Envio real de SMS/WhatsApp para códigos de verificação
 - Sistema de avaliações e reviews
-- Comissão automática da plataforma
 - Notificações por email
-- Painel de administração
+- Analytics avançados
 
 ---
 

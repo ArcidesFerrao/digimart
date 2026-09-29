@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db as  prisma } from "@/lib/prisma";
+import { db as prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
 
 const productSchema = z.object({
   title: z.string().min(3),
@@ -8,6 +9,7 @@ const productSchema = z.object({
   price: z.number().positive(),
   category: z.enum(["EBOOK", "TEMPLATE", "COURSE", "OTHER"]),
   coverImage: z.string().url(),
+  images: z.array(z.string().url()).optional(),
   fileUrl: z.string().url().optional(),
 });
 
@@ -52,14 +54,22 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    if (!session.user.isVerified) {
+      return NextResponse.json({ error: "Conta não verificada" }, { status: 403 });
+    }
+
     const body = await req.json();
     const validated = productSchema.parse(body);
 
-    // TODO: Get sellerId from session
     const product = await prisma.product.create({
       data: {
         ...validated,
-        sellerId: body.sellerId,
+        sellerId: session.user.id,
       },
     });
 

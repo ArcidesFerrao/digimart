@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db as  prisma } from "@/lib/prisma";
+import { db as prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -9,8 +9,11 @@ const registerSchema = z.object({
   password: z.string().min(6),
   username: z.string().min(3),
   whatsapp: z.string().min(9),
-  bio: z.string().min(10),
 });
+
+function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,16 +37,32 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(validated.password, 10);
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
     const user = await prisma.user.create({
       data: {
         ...validated,
         password: hashedPassword,
+        verificationCode,
+        verificationExpires,
+        isVerified: false,
       },
     });
 
+    // Aqui enviarias o código via SMS/WhatsApp API
+    // Por agora, retornamos no response para facilitar testes
+    console.log(`Código de verificação para ${user.email}: ${verificationCode}`);
+
     return NextResponse.json(
-      { id: user.id, email: user.email, name: user.name },
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        message: "Conta criada. Verifica o teu email/WhatsApp para o código de activação.",
+        // Em produção, remover isto:
+        debugCode: verificationCode,
+      },
       { status: 201 }
     );
   } catch (error) {

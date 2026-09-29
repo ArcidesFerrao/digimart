@@ -6,9 +6,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "utfs.io" },
       { protocol: "https", hostname: "*.ufs.sh" },
       { protocol: "https", hostname: "uploadthing.com" },
+      { protocol: "https", hostname: "api.dicebear.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
-  serverExternalPackages: ["pg", "@prisma/client", "@prisma/adapter-pg"],
+  serverExternalPackages: ["pg", "", "@prisma/adapter-pg"],
   webpack: (config: any) => {
     config.experiments = {
       ...config.experiments,

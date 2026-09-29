@@ -12,11 +12,13 @@ import {
   Calendar,
   User,
   Tag,
-  ExternalLink,
+  CreditCard,
+  CheckCircle,
+  Smartphone,
+  ImageIcon,
 } from "lucide-react";
-import { ProductWithSeller } from "@/types";
-// import type { Category } from "@prisma/client/edge";
-type Category = "EBOOK" | "TEMPLATE" | "COURSE" | "OTHER";
+import { Category } from "@prisma/client";
+
 async function getProduct(id: string) {
   return prisma.product.findUnique({
     where: { id },
@@ -35,13 +37,10 @@ async function getProduct(id: string) {
   });
 }
 
-async function getRelatedProducts(
-  category: Category,
-  excludeId: string,
-): Promise<ProductWithSeller[]> {
+async function getRelatedProducts(category: string, excludeId: string) {
   return prisma.product.findMany({
     where: {
-      category,
+      category: category as Category,
       isActive: true,
       id: { not: excludeId },
     },
@@ -50,10 +49,10 @@ async function getRelatedProducts(
         select: {
           id: true,
           name: true,
+          bio: true,
           username: true,
           whatsapp: true,
           avatar: true,
-          bio: true,
         },
       },
     },
@@ -76,25 +75,24 @@ const categoryVariants: Record<string, "teal" | "warn" | "green" | "default"> =
     OTHER: "default",
   };
 
-type Params = Promise<{ id: string }>;
-export async function generateMetadata({ params }: { params: Params }) {
-  const { id } = await params;
-  const product = await getProduct(id);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const product = await getProduct((await params).id);
   if (!product) return { title: "Produto não encontrado" };
   return {
     title: `${product.title} — DigiMart`,
     description: product.description.slice(0, 160),
   };
 }
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: Params;
-}) {
-  const { id } = await params;
-  const product = await getProduct(id);
-
+export default async function ProductPage({ params }: Props) {
+  const product = await getProduct((await params).id);
   if (!product) {
     notFound();
   }
@@ -109,9 +107,15 @@ export default async function ProductDetailPage({
     product.price,
   );
 
+  const paidMessage = `Olá! Já efectuei o pagamento de ${formatPrice(product.price)} pelo produto "${product.title}" via M-Pesa/e-Mola. Podes confirmar e enviar o produto?`;
+  const paidWhatsAppLink = `https://wa.me/${product.seller.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(paidMessage)}`;
+
+  const allImages = [product.coverImage, ...(product.images || [])].filter(
+    Boolean,
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-      {/* Back */}
       <Link
         href="/products"
         className="inline-flex items-center gap-2 text-sm text-muted hover:text-teal transition-colors mb-8"
@@ -121,15 +125,51 @@ export default async function ProductDetailPage({
       </Link>
 
       <div className="grid lg:grid-cols-2 gap-12 mb-16">
-        {/* Image */}
-        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border bg-surface">
-          <Image
-            src={product.coverImage}
-            alt={product.title}
-            fill
-            className="object-cover"
-            priority
-          />
+        {/* Image Gallery */}
+        <div className="space-y-4">
+          {/* Main Image - Square */}
+          <div className="relative aspect-square rounded-2xl overflow-hidden border border-border bg-surface">
+            <Image
+              src={product.coverImage}
+              alt={product.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+
+          {/* Additional Images Grid - natural ratios */}
+          {product.images && product.images.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <ImageIcon className="h-4 w-4 text-teal" />
+                <h3 className="font-mono text-xs uppercase tracking-wider text-muted">
+                  Galeria
+                </h3>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {product.images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="relative rounded-xl overflow-hidden border border-border bg-surface group"
+                  >
+                    <div
+                      className="relative w-full"
+                      style={{ paddingBottom: "75%" }}
+                    >
+                      <Image
+                        src={img}
+                        alt={`${product.title} - imagem ${idx + 2}`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 33vw, 250px"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -206,22 +246,80 @@ export default async function ProductDetailPage({
             </div>
           </div>
 
-          {/* CTA */}
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full"
-          >
-            <Button size="lg" className="w-full gap-2 text-base">
-              <MessageCircle className="h-5 w-5" />
-              Comprar via WhatsApp
-            </Button>
-          </a>
-          <p className="text-xs text-muted text-center mt-3">
-            Serás redireccionado para o WhatsApp do vendedor com uma mensagem
-            pré-preenchida.
-          </p>
+          {/* Purchase Options */}
+          <div className="space-y-4">
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Button size="lg" className="w-full gap-2 text-base">
+                <MessageCircle className="h-5 w-5" />
+                Comprar via WhatsApp
+              </Button>
+            </a>
+            <p className="text-xs text-muted text-center">
+              Fala com o vendedor para combinar o pagamento e receber o produto.
+            </p>
+
+            <div className="flex items-center gap-4 my-4">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted uppercase tracking-wider">
+                ou
+              </span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div className="bg-teal/5 border border-teal/20 rounded-xl p-5">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-teal/10 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="h-5 w-5 text-teal" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground text-sm">
+                    Já efectuaste o pagamento?
+                  </h4>
+                  <p className="text-xs text-muted mt-1">
+                    Se já pagaste via M-Pesa ou e-Mola, confirma com o vendedor
+                    para receber o produto.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm text-muted">
+                  <CheckCircle className="h-4 w-4 text-teal flex-shrink-0" />
+                  <span>
+                    1. Efectua o pagamento para:{" "}
+                    <strong className="text-foreground">
+                      {product.seller.whatsapp}
+                    </strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-muted">
+                  <CheckCircle className="h-4 w-4 text-teal flex-shrink-0" />
+                  <span>2. Guarda o comprovativo de pagamento</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-muted">
+                  <CheckCircle className="h-4 w-4 text-teal flex-shrink-0" />
+                  <span>3. Clica no botão abaixo para confirmar</span>
+                </div>
+              </div>
+
+              <a
+                href={paidWhatsAppLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-4"
+              >
+                <Button variant="outline" size="lg" className="w-full gap-2">
+                  <Smartphone className="h-5 w-5" />
+                  Confirmar Pagamento no WhatsApp
+                </Button>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 

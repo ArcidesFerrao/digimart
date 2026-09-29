@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { authConfig } from "@/lib/auth.config";
 import bcrypt from "bcryptjs";
+import { authConfig } from "@/lib/auth.config";
 import { db as prisma } from "./prisma";
 import { z } from "zod";
 
@@ -55,7 +55,10 @@ export const {
           email: user.email,
           name: user.name,
           username: user.username,
+          whatsapp: user.whatsapp,
           avatar: user.avatar,
+          isVerified: user.isVerified,
+          isAdmin: user.isAdmin,
         };
       },
     }),
@@ -66,6 +69,9 @@ export const {
         token.id = user.id;
         token.username = user.username;
         token.avatar = user.avatar;
+        token.isVerified = user.isVerified;
+        token.isAdmin = user.isAdmin;
+        token.whatsapp = (user as typeof user & { whatsapp: string | null }).whatsapp;
       }
       return token;
     },
@@ -74,6 +80,9 @@ export const {
         session.user.id = token.id as string;
         session.user.username = token.username as string;
         session.user.avatar = token.avatar as string | null;
+        session.user.isVerified = token.isVerified as boolean;
+        session.user.isAdmin = token.isAdmin as boolean;
+        session.user.whatsapp = token.whatsapp as string | null;
       }
       return session;
     },

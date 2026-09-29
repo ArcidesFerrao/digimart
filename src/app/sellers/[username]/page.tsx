@@ -3,6 +3,12 @@ import Image from "next/image";
 import { db as prisma } from "@/lib/prisma";
 import { ProductGrid } from "@/components/products/product-grid";
 import { User, MessageCircle, Package } from "lucide-react";
+import {
+  Product,
+  ProductWithSeller,
+  Seller,
+  SellerWithProducts,
+} from "@/types";
 
 async function getSeller(username: string) {
   return prisma.user.findUnique({
@@ -19,9 +25,9 @@ async function getSeller(username: string) {
         include: {
           seller: {
             select: {
-              bio: true,
               id: true,
               name: true,
+              bio: true,
               username: true,
               whatsapp: true,
               avatar: true,
@@ -34,11 +40,12 @@ async function getSeller(username: string) {
   });
 }
 
-type Params = Promise<{ username: string }>;
-
-export async function generateMetadata({ params }: { params: Params }) {
-  const { username } = await params;
-  const seller = await getSeller(username);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const seller = await getSeller((await params).username);
   if (!seller) return { title: "Vendedor não encontrado" };
   return {
     title: `${seller.name} — DigiMart`,
@@ -46,9 +53,12 @@ export async function generateMetadata({ params }: { params: Params }) {
   };
 }
 
-export default async function SellerPage({ params }: { params: Params }) {
-  const { username } = await params;
-  const seller = await getSeller(username);
+export default async function SellerPage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const seller = await getSeller((await params).username);
 
   if (!seller) {
     notFound();

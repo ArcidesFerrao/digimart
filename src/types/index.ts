@@ -1,8 +1,3 @@
-export interface Category {
-  id: string;
-  name: string;
-}
-
 export interface Seller {
   id: string;
   name: string;
@@ -19,6 +14,7 @@ export interface Product {
   price: number;
   category: string;
   coverImage: string;
+  images: string[];
   fileUrl: string | null;
   isActive: boolean;
   sellerId: string;
