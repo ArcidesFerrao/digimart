@@ -45,18 +45,16 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
+          {/* <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <ShoppingBag className="h-8 w-8 text-teal" />
             <span className="font-bebas text-3xl tracking-wider text-foreground">
               DIGI<span className="text-teal">MART</span>
             </span>
-          </Link>
+          </Link> */}
           <h1 className="font-bebas text-4xl tracking-wide mb-2">
             ENTRAR NA <span className="text-teal">CONTA</span>
           </h1>
-          <p className="text-muted text-sm">
-            Acede ao teu painel de vendedor
-          </p>
+          <p className="text-muted text-sm">Acede ao teu painel de vendedor</p>
         </div>
 
         {/* Form */}
@@ -90,8 +88,7 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                A entrar...
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />A entrar...
               </>
             ) : (
               "Entrar"

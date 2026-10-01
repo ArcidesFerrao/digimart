@@ -12,7 +12,12 @@ export async function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <ShoppingBag className="h-5 w-5 text-teal" />
+              <img
+                src="/favicon.png"
+                alt="DigiMart Logo"
+                width={32}
+                height={32}
+              />
               <span className="font-bebas text-xl tracking-wider text-foreground">
                 DIGI<span className="text-teal">MART</span>
               </span>

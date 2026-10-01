@@ -103,7 +103,12 @@ export default function VerifyPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <ShoppingBag className="h-8 w-8 text-teal" />
+            <img
+              src="/favicon.png"
+              alt="DigiMart Logo"
+              width={32}
+              height={32}
+            />
             <span className="font-bebas text-3xl tracking-wider text-foreground">
               DIGI<span className="text-teal">MART</span>
             </span>
