@@ -51,7 +51,7 @@ export default function VerifyPage() {
       }
 
       toast.success("Conta verificada com sucesso!");
-      await update();
+      await update({ isVerified: true });
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
