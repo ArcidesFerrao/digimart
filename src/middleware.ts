@@ -10,8 +10,15 @@ export default auth((req) => {
   const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
   const isVerifyRoute = nextUrl.pathname === "/verify";
-  const isAdminRoute = nextUrl.pathname.startsWith("/admin");
+  const isVerifyApiRoute =
+    nextUrl.pathname === "/api/verify" ||
+    nextUrl.pathname === "/api/verify/resend"; // ajusta ao nome da tua rota de reenvio
 
+  const isAdminRoute = nextUrl.pathname.startsWith("/admin");
+  
+  if (isApiAuthRoute || isVerifyApiRoute) {
+    return NextResponse.next();
+  }
   if (isApiAuthRoute) {
     return NextResponse.next();
   }

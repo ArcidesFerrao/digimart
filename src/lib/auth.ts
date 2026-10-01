@@ -64,7 +64,7 @@ export const {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.username = user.username;
@@ -73,6 +73,9 @@ export const {
         token.isAdmin = user.isAdmin;
         token.whatsapp = (user as typeof user & { whatsapp: string | null }).whatsapp;
       }
+      if (trigger === "update" && session?.isVerified !== undefined) {
+      token.isVerified = session.isVerified;
+    }
       return token;
     },
     async session({ session, token }) {
