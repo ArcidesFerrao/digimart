@@ -43,10 +43,11 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.create({
       data: {
         ...validated,
+        whatsapp: validated.whatsapp.trim(),
         password: hashedPassword,
         verificationCode,
         verificationExpires,
-        isVerified: false,
+        isVerified: true, //temporariamente
       },
     });
 

@@ -15,6 +15,7 @@ import {
   Link2,
   Download,
 } from "lucide-react";
+import { DeleteForm } from "@/components/ui/DeleteForm";
 
 async function getSellerProducts(userId: string) {
   return prisma.product.findMany({
@@ -87,21 +88,27 @@ export default async function DashboardPage() {
             <Package className="h-5 w-5 text-teal" />
             <span className="text-sm text-muted">Total</span>
           </div>
-          <p className="font-bebas text-3xl text-foreground">{products.length}</p>
+          <p className="font-bebas text-3xl text-foreground">
+            {products.length}
+          </p>
         </div>
         <div className="bg-surface border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
             <Eye className="h-5 w-5 text-green" />
             <span className="text-sm text-muted">Activos</span>
           </div>
-          <p className="font-bebas text-3xl text-green">{activeProducts.length}</p>
+          <p className="font-bebas text-3xl text-green">
+            {activeProducts.length}
+          </p>
         </div>
         <div className="bg-surface border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp className="h-5 w-5 text-warn" />
             <span className="text-sm text-muted">Inactivos</span>
           </div>
-          <p className="font-bebas text-3xl text-warn">{inactiveProducts.length}</p>
+          <p className="font-bebas text-3xl text-warn">
+            {inactiveProducts.length}
+          </p>
         </div>
         <div className="bg-surface border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
@@ -121,18 +128,25 @@ export default async function DashboardPage() {
               Links de Download Recentes
             </h3>
             <Link href="/dashboard/links">
-              <Button variant="ghost" size="sm">Ver todos</Button>
+              <Button variant="ghost" size="sm">
+                Ver todos
+              </Button>
             </Link>
           </div>
           <div className="space-y-3">
             {recentLinks.map((link) => (
-              <div key={link.id} className="flex items-center justify-between bg-background rounded-lg p-3">
+              <div
+                key={link.id}
+                className="flex items-center justify-between bg-background rounded-lg p-3"
+              >
                 <div>
-                  <p className="text-sm font-medium text-foreground">{link.product.title}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {link.product.title}
+                  </p>
                   <p className="text-xs text-muted">
-                    {link.buyerName || link.buyerPhone || "Sem comprador"} · {" "}
-                    {link.downloadCount}/{link.maxDownloads} downloads · {" "}
-                    Expira: {new Date(link.expiresAt).toLocaleDateString("pt-MZ")}
+                    {link.buyerName || link.buyerPhone || "Sem comprador"} ·{" "}
+                    {link.downloadCount}/{link.maxDownloads} downloads · Expira:{" "}
+                    {new Date(link.expiresAt).toLocaleDateString("pt-MZ")}
                   </p>
                 </div>
                 <Badge variant={link.isActive ? "green" : "default"}>
@@ -236,35 +250,24 @@ export default async function DashboardPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Link href={`/products/${product.id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/products/${product.id}/edit`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <form
-                          action={`/api/products/${product.id}`}
-                          method="DELETE"
-                          onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (!confirm("Tens a certeza que queres eliminar este produto?"))
-                              return;
-                            await fetch(`/api/products/${product.id}`, { method: "DELETE" });
-                            window.location.reload();
-                          }}
-                        >
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-danger hover:text-danger hover:bg-danger/10"
-                            type="submit"
+                            className="h-8 w-8 p-0"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
-                        </form>
+                        </Link>
+                        <DeleteForm id={product.id} />
                       </div>
                     </td>
                   </tr>
