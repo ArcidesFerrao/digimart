@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
 
     if (user.isVerified) {
       return NextResponse.json(
-        { error: "Conta já está verificada" },
-        { status: 400 }
+        { message: "Conta já está verificada" },
+        { status: 200 }
       );
     }
 
