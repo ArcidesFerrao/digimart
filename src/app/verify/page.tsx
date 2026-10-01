@@ -101,18 +101,7 @@ export default function VerifyPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <img
-              src="/favicon.png"
-              alt="DigiMart Logo"
-              width={32}
-              height={32}
-            />
-            <span className="font-bebas text-3xl tracking-wider text-foreground">
-              DIGI<span className="text-teal">MART</span>
-            </span>
-          </Link>
+        <div className="text-center my-10">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-warn/10 border border-warn/25 flex items-center justify-center">
             <AlertTriangle className="h-8 w-8 text-warn" />
           </div>
@@ -231,7 +220,7 @@ export default function VerifyPage() {
           >
             {resending ? "A enviar..." : "Não recebeste? Reenviar código"}
           </button>
-          <div>
+          <div className="pb-5">
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="text-xs text-muted hover:text-foreground"
