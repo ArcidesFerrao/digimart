@@ -22,12 +22,18 @@ export default function RegisterPage() {
     bio: "",
   });
 
+  const passwordsDoNotMatch =
+    formData.confirmPassword.length > 0 &&
+    formData.password !== formData.confirmPassword;
+
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
+    const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: name === "whatsapp" ? value.replace(/\D/g, "") : value,
     }));
   }
 
@@ -163,7 +169,14 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
+                className={passwordsDoNotMatch ? "border-destructive" : ""}
               />
+
+              {passwordsDoNotMatch && (
+                <p className="text-xs text-destructive mt-1">
+                  As passwords não coincidem.
+                </p>
+              )}
             </div>
           </div>
 
@@ -173,6 +186,7 @@ export default function RegisterPage() {
             </label>
             <Input
               name="whatsapp"
+              inputMode="numeric"
               placeholder="258841234567"
               value={formData.whatsapp}
               onChange={handleChange}
@@ -199,8 +213,8 @@ export default function RegisterPage() {
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                A criar conta...
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />A criar
+                conta...
               </>
             ) : (
               "Criar Conta"
