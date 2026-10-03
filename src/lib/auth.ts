@@ -73,9 +73,15 @@ export const {
         token.isAdmin = user.isAdmin;
         token.whatsapp = (user as typeof user & { whatsapp: string | null }).whatsapp;
       }
-      if (trigger === "update" && session?.isVerified !== undefined) {
-      token.isVerified = session.isVerified;
-    }
+      // O estado de verificação vem sempre da base de dados, nunca do cliente:
+      // com update({ isVerified: true }) qualquer utilizador contornava a verificação.
+      if (trigger === "update" && token.id) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { isVerified: true },
+        });
+        if (fresh) token.isVerified = fresh.isVerified;
+      }
       return token;
     },
     async session({ session, token }) {

@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import {
+  generateUniqueCode,
+  CODE_TTL_MS,
+  RESEND_COOLDOWN_MS,
+} from "@/lib/verification";
+import { sendVerificationEmail } from "@/lib/email";
 
-// POST /api/verify - verify a code
+// POST /api/verify - verificar o código (só o próprio utilizador autenticado)
 export async function POST(req: NextRequest) {
   try {
-    const { userId, code } = await req.json();
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
 
-    if (!userId || !code) {
+    const { code } = await req.json();
+
+    if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
       return NextResponse.json(
-        { error: "User ID e código são obrigatórios" },
+        { error: "O código deve ter 6 dígitos" },
         { status: 400 }
       );
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: session.user.id },
     });
 
     if (!user) {
@@ -31,7 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (user.verificationCode !== code) {
+    if (!user.verificationCode || user.verificationCode !== code) {
       return NextResponse.json(
         { error: "Código incorrecto" },
         { status: 400 }
@@ -46,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     await prisma.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: {
         isVerified: true,
         verificationCode: null,
@@ -59,6 +71,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Erro ao verificar código" },
       { status: 500 }
@@ -66,20 +79,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT /api/verify - resend code
-export async function PUT(req: NextRequest) {
+// PUT /api/verify - reenviar o código por email
+export async function PUT() {
   try {
-    const { userId } = await req.json();
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID é obrigatório" },
-        { status: 400 }
-      );
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: session.user.id },
     });
 
     if (!user) {
@@ -96,27 +105,45 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const newExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Intervalo mínimo entre envios. O momento do último envio deduz-se da validade
+    // (validade = envio + 24h), por isso não precisa de campo novo na base de dados.
+    if (user.verificationExpires) {
+      const lastSent = user.verificationExpires.getTime() - CODE_TTL_MS;
+      const waitMs = RESEND_COOLDOWN_MS - (Date.now() - lastSent);
+      if (waitMs > 0) {
+        return NextResponse.json(
+          {
+            error: `Aguarda ${Math.ceil(waitMs / 1000)} segundos antes de pedir outro código.`,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    const newCode = await generateUniqueCode();
+    const newExpires = new Date(Date.now() + CODE_TTL_MS);
 
     await prisma.user.update({
-      where: { id: userId },
-      data: {
-        verificationCode: newCode,
-        verificationExpires: newExpires,
-      },
+      where: { id: user.id },
+      data: { verificationCode: newCode, verificationExpires: newExpires },
     });
 
-    console.log(`Novo código para ${user.email}: ${newCode}`);
+    const sent = await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      code: newCode,
+    });
 
-    return NextResponse.json(
-      {
-        message: "Novo código enviado!",
-        debugCode: newCode,
-      },
-      { status: 200 }
-    );
+    if (!sent) {
+      return NextResponse.json(
+        { error: "Não foi possível enviar o email. Tenta novamente daqui a pouco." },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ message: "Novo código enviado!" }, { status: 200 });
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Erro ao reenviar código" },
       { status: 500 }

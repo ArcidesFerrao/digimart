@@ -11,7 +11,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Mail,
-  MessageCircle,
   Smartphone,
   Clock,
 } from "lucide-react";
@@ -51,7 +50,7 @@ export default function VerifyPage() {
       }
 
       toast.success("Conta verificada com sucesso!");
-      await update({ isVerified: true });
+      await update(); // o servidor lê o estado da base de dados
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
@@ -79,10 +78,7 @@ export default function VerifyPage() {
         return;
       }
 
-      toast.success("Novo código enviado! Verifica o teu email/WhatsApp.");
-      if (data.debugCode) {
-        console.log("Código de debug:", data.debugCode);
-      }
+      toast.success("Novo código enviado! Verifica o teu email.");
     } catch (error) {
       toast.error("Erro ao reenviar código");
     } finally {
@@ -122,25 +118,13 @@ export default function VerifyPage() {
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="h-4 w-4 text-teal" />
-              </div>
-              <div>
-                <p className="text-sm text-foreground font-medium">WhatsApp</p>
-                <p className="text-xs text-muted">
-                  Enviámos uma mensagem com o código para o teu WhatsApp (
-                  {session.user.whatsapp || "número registado"}).
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
                 <Mail className="h-4 w-4 text-teal" />
               </div>
               <div>
                 <p className="text-sm text-foreground font-medium">Email</p>
                 <p className="text-xs text-muted">
-                  Também enviámos o código para o teu email (
-                  {session.user.email}).
+                  Enviámos o código para o teu email ({session.user.email}).
+                  Se não o vires, verifica a pasta de spam.
                 </p>
               </div>
             </div>

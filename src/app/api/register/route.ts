@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { generateUniqueCode, CODE_TTL_MS } from "@/lib/verification";
+import { sendVerificationEmail } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -18,10 +20,6 @@ const registerSchema = z.object({
     ),
   whatsapp: z.string().min(9),
 });
-
-function generateVerificationCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,8 +43,8 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(validated.password, 10);
-    const verificationCode = generateVerificationCode();
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    const verificationCode = await generateUniqueCode();
+    const verificationExpires = new Date(Date.now() + CODE_TTL_MS);
 
     const user = await prisma.user.create({
       data: {
@@ -55,22 +53,27 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         verificationCode,
         verificationExpires,
-        isVerified: true, //temporariamente
+        isVerified: false,
       },
     });
 
-    // Aqui enviarias o código via SMS/WhatsApp API
-    // Por agora, retornamos no response para facilitar testes
-    console.log(`Código de verificação para ${user.email}: ${verificationCode}`);
+    // Na Vercel a função termina quando a resposta sai, por isso o envio tem de ser aguardado.
+    // Se falhar, a conta fica criada e o utilizador pode pedir novo código em /verify.
+    const emailSent = await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      code: verificationCode,
+    });
 
     return NextResponse.json(
       {
         id: user.id,
         email: user.email,
         name: user.name,
-        message: "Conta criada. Verifica o teu email/WhatsApp para o código de activação.",
-        // Em produção, remover isto:
-        debugCode: verificationCode,
+        emailSent,
+        message: emailSent
+          ? "Conta criada. Enviámos um código de verificação para o teu email."
+          : "Conta criada, mas não conseguimos enviar o email. Pede um novo código ao entrares.",
       },
       { status: 201 }
     );

@@ -1,0 +1,446 @@
+diff --git a/src/app/api/register/route.ts b/src/app/api/register/route.ts
+index e0c525b..578efe8 100644
+--- a/src/app/api/register/route.ts
++++ b/src/app/api/register/route.ts
+@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
+ import { db as prisma } from "@/lib/prisma";
+ import bcrypt from "bcryptjs";
+ import { z } from "zod";
++import { generateUniqueCode, CODE_TTL_MS } from "@/lib/verification";
++import { sendVerificationEmail } from "@/lib/email";
+ 
+ const registerSchema = z.object({
+   name: z.string().min(2),
+@@ -19,10 +21,6 @@ const registerSchema = z.object({
+   whatsapp: z.string().min(9),
+ });
+ 
+-function generateVerificationCode(): string {
+-  return Math.floor(100000 + Math.random() * 900000).toString();
+-}
+-
+ export async function POST(req: NextRequest) {
+   try {
+     const body = await req.json();
+@@ -45,8 +43,8 @@ export async function POST(req: NextRequest) {
+     }
+ 
+     const hashedPassword = await bcrypt.hash(validated.password, 10);
+-    const verificationCode = generateVerificationCode();
+-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
++    const verificationCode = await generateUniqueCode();
++    const verificationExpires = new Date(Date.now() + CODE_TTL_MS);
+ 
+     const user = await prisma.user.create({
+       data: {
+@@ -55,22 +53,27 @@ export async function POST(req: NextRequest) {
+         password: hashedPassword,
+         verificationCode,
+         verificationExpires,
+-        isVerified: true, //temporariamente
++        isVerified: false,
+       },
+     });
+ 
+-    // Aqui enviarias o código via SMS/WhatsApp API
+-    // Por agora, retornamos no response para facilitar testes
+-    console.log(`Código de verificação para ${user.email}: ${verificationCode}`);
++    // Na Vercel a função termina quando a resposta sai, por isso o envio tem de ser aguardado.
++    // Se falhar, a conta fica criada e o utilizador pode pedir novo código em /verify.
++    const emailSent = await sendVerificationEmail({
++      to: user.email,
++      name: user.name,
++      code: verificationCode,
++    });
+ 
+     return NextResponse.json(
+       {
+         id: user.id,
+         email: user.email,
+         name: user.name,
+-        message: "Conta criada. Verifica o teu email/WhatsApp para o código de activação.",
+-        // Em produção, remover isto:
+-        debugCode: verificationCode,
++        emailSent,
++        message: emailSent
++          ? "Conta criada. Enviámos um código de verificação para o teu email."
++          : "Conta criada, mas não conseguimos enviar o email. Pede um novo código ao entrares.",
+       },
+       { status: 201 }
+     );
+diff --git a/src/app/api/verify/route.ts b/src/app/api/verify/route.ts
+index 5f4cd6f..4791b1f 100644
+--- a/src/app/api/verify/route.ts
++++ b/src/app/api/verify/route.ts
+@@ -1,20 +1,32 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import { db as prisma } from "@/lib/prisma";
+-
+-// POST /api/verify - verify a code
++import { auth } from "@/lib/auth";
++import {
++  generateUniqueCode,
++  CODE_TTL_MS,
++  RESEND_COOLDOWN_MS,
++} from "@/lib/verification";
++import { sendVerificationEmail } from "@/lib/email";
++
++// POST /api/verify - verificar o código (só o próprio utilizador autenticado)
+ export async function POST(req: NextRequest) {
+   try {
+-    const { userId, code } = await req.json();
++    const session = await auth();
++    if (!session?.user?.id) {
++      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
++    }
++
++    const { code } = await req.json();
+ 
+-    if (!userId || !code) {
++    if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
+       return NextResponse.json(
+-        { error: "User ID e código são obrigatórios" },
++        { error: "O código deve ter 6 dígitos" },
+         { status: 400 }
+       );
+     }
+ 
+     const user = await prisma.user.findUnique({
+-      where: { id: userId },
++      where: { id: session.user.id },
+     });
+ 
+     if (!user) {
+@@ -31,7 +43,7 @@ export async function POST(req: NextRequest) {
+       );
+     }
+ 
+-    if (user.verificationCode !== code) {
++    if (!user.verificationCode || user.verificationCode !== code) {
+       return NextResponse.json(
+         { error: "Código incorrecto" },
+         { status: 400 }
+@@ -46,7 +58,7 @@ export async function POST(req: NextRequest) {
+     }
+ 
+     await prisma.user.update({
+-      where: { id: userId },
++      where: { id: user.id },
+       data: {
+         isVerified: true,
+         verificationCode: null,
+@@ -59,6 +71,7 @@ export async function POST(req: NextRequest) {
+       { status: 200 }
+     );
+   } catch (error) {
++    console.error(error);
+     return NextResponse.json(
+       { error: "Erro ao verificar código" },
+       { status: 500 }
+@@ -66,20 +79,16 @@ export async function POST(req: NextRequest) {
+   }
+ }
+ 
+-// PUT /api/verify - resend code
+-export async function PUT(req: NextRequest) {
++// PUT /api/verify - reenviar o código por email
++export async function PUT() {
+   try {
+-    const { userId } = await req.json();
+-
+-    if (!userId) {
+-      return NextResponse.json(
+-        { error: "User ID é obrigatório" },
+-        { status: 400 }
+-      );
++    const session = await auth();
++    if (!session?.user?.id) {
++      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+     }
+ 
+     const user = await prisma.user.findUnique({
+-      where: { id: userId },
++      where: { id: session.user.id },
+     });
+ 
+     if (!user) {
+@@ -96,27 +105,45 @@ export async function PUT(req: NextRequest) {
+       );
+     }
+ 
+-    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+-    const newExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
++    // Intervalo mínimo entre envios. O momento do último envio deduz-se da validade
++    // (validade = envio + 24h), por isso não precisa de campo novo na base de dados.
++    if (user.verificationExpires) {
++      const lastSent = user.verificationExpires.getTime() - CODE_TTL_MS;
++      const waitMs = RESEND_COOLDOWN_MS - (Date.now() - lastSent);
++      if (waitMs > 0) {
++        return NextResponse.json(
++          {
++            error: `Aguarda ${Math.ceil(waitMs / 1000)} segundos antes de pedir outro código.`,
++          },
++          { status: 429 }
++        );
++      }
++    }
++
++    const newCode = await generateUniqueCode();
++    const newExpires = new Date(Date.now() + CODE_TTL_MS);
+ 
+     await prisma.user.update({
+-      where: { id: userId },
+-      data: {
+-        verificationCode: newCode,
+-        verificationExpires: newExpires,
+-      },
++      where: { id: user.id },
++      data: { verificationCode: newCode, verificationExpires: newExpires },
+     });
+ 
+-    console.log(`Novo código para ${user.email}: ${newCode}`);
++    const sent = await sendVerificationEmail({
++      to: user.email,
++      name: user.name,
++      code: newCode,
++    });
+ 
+-    return NextResponse.json(
+-      {
+-        message: "Novo código enviado!",
+-        debugCode: newCode,
+-      },
+-      { status: 200 }
+-    );
++    if (!sent) {
++      return NextResponse.json(
++        { error: "Não foi possível enviar o email. Tenta novamente daqui a pouco." },
++        { status: 502 }
++      );
++    }
++
++    return NextResponse.json({ message: "Novo código enviado!" }, { status: 200 });
+   } catch (error) {
++    console.error(error);
+     return NextResponse.json(
+       { error: "Erro ao reenviar código" },
+       { status: 500 }
+diff --git a/src/app/auth/register/page.tsx b/src/app/auth/register/page.tsx
+index d9fc38c..5861b1d 100644
+--- a/src/app/auth/register/page.tsx
++++ b/src/app/auth/register/page.tsx
+@@ -83,7 +83,11 @@ export default function RegisterPage() {
+         return;
+       }
+ 
+-      toast.success("Conta criada com sucesso!");
++      toast.success(
++        data.emailSent === false
++          ? "Conta criada! Ao entrares, pede um novo código de verificação."
++          : "Conta criada! Enviámos um código de verificação para o teu email.",
++      );
+       router.push("/auth/login");
+     } catch (error) {
+       toast.error("Erro ao criar conta");
+diff --git a/src/app/verify/page.tsx b/src/app/verify/page.tsx
+index 055d48b..2547ff4 100644
+--- a/src/app/verify/page.tsx
++++ b/src/app/verify/page.tsx
+@@ -11,7 +11,6 @@ import {
+   CheckCircle,
+   AlertTriangle,
+   Mail,
+-  MessageCircle,
+   Smartphone,
+   Clock,
+ } from "lucide-react";
+@@ -51,7 +50,7 @@ export default function VerifyPage() {
+       }
+ 
+       toast.success("Conta verificada com sucesso!");
+-      await update({ isVerified: true });
++      await update(); // o servidor lê o estado da base de dados
+       router.push("/dashboard");
+       router.refresh();
+     } catch (error) {
+@@ -79,10 +78,7 @@ export default function VerifyPage() {
+         return;
+       }
+ 
+-      toast.success("Novo código enviado! Verifica o teu email/WhatsApp.");
+-      if (data.debugCode) {
+-        console.log("Código de debug:", data.debugCode);
+-      }
++      toast.success("Novo código enviado! Verifica o teu email.");
+     } catch (error) {
+       toast.error("Erro ao reenviar código");
+     } finally {
+@@ -120,18 +116,6 @@ export default function VerifyPage() {
+             Como recebes o código?
+           </h3>
+           <div className="space-y-3">
+-            <div className="flex items-start gap-3">
+-              <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
+-                <MessageCircle className="h-4 w-4 text-teal" />
+-              </div>
+-              <div>
+-                <p className="text-sm text-foreground font-medium">WhatsApp</p>
+-                <p className="text-xs text-muted">
+-                  Enviámos uma mensagem com o código para o teu WhatsApp (
+-                  {session.user.whatsapp || "número registado"}).
+-                </p>
+-              </div>
+-            </div>
+             <div className="flex items-start gap-3">
+               <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
+                 <Mail className="h-4 w-4 text-teal" />
+@@ -139,8 +123,8 @@ export default function VerifyPage() {
+               <div>
+                 <p className="text-sm text-foreground font-medium">Email</p>
+                 <p className="text-xs text-muted">
+-                  Também enviámos o código para o teu email (
+-                  {session.user.email}).
++                  Enviámos o código para o teu email ({session.user.email}).
++                  Se não o vires, verifica a pasta de spam.
+                 </p>
+               </div>
+             </div>
+diff --git a/src/lib/auth.ts b/src/lib/auth.ts
+index 6155f78..7e65c56 100644
+--- a/src/lib/auth.ts
++++ b/src/lib/auth.ts
+@@ -73,9 +73,15 @@ export const {
+         token.isAdmin = user.isAdmin;
+         token.whatsapp = (user as typeof user & { whatsapp: string | null }).whatsapp;
+       }
+-      if (trigger === "update" && session?.isVerified !== undefined) {
+-      token.isVerified = session.isVerified;
+-    }
++      // O estado de verificação vem sempre da base de dados, nunca do cliente:
++      // com update({ isVerified: true }) qualquer utilizador contornava a verificação.
++      if (trigger === "update" && token.id) {
++        const fresh = await prisma.user.findUnique({
++          where: { id: token.id as string },
++          select: { isVerified: true },
++        });
++        if (fresh) token.isVerified = fresh.isVerified;
++      }
+       return token;
+     },
+     async session({ session, token }) {
+diff --git a/src/lib/email.ts b/src/lib/email.ts
+new file mode 100644
+index 0000000..7180323
+--- /dev/null
++++ b/src/lib/email.ts
+@@ -0,0 +1,82 @@
++const RESEND_URL = "https://api.resend.com/emails";
++
++function escapeHtml(s: string) {
++  return s
++    .replace(/&/g, "&amp;")
++    .replace(/</g, "&lt;")
++    .replace(/>/g, "&gt;")
++    .replace(/"/g, "&quot;");
++}
++
++/**
++ * Envia o código de verificação por email (Resend).
++ * Nunca lança erro: devolve true se o Resend aceitou o pedido, false caso contrário.
++ * Variáveis de ambiente: RESEND_API_KEY, EMAIL_FROM, EMAIL_REPLY_TO (opcional).
++ */
++export async function sendVerificationEmail(params: {
++  to: string;
++  name: string;
++  code: string;
++}): Promise<boolean> {
++  const { to, name, code } = params;
++
++  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
++    console.error("Email não configurado: faltam RESEND_API_KEY ou EMAIL_FROM");
++    return false;
++  }
++
++  const firstName = name.trim().split(/\s+/)[0] || "";
++  const greeting = firstName ? `Olá, ${firstName}!` : "Olá!";
++
++  const text = `${greeting}
++
++O teu código de verificação do DigiMart é: ${code}
++
++O código é válido durante 24 horas. Introduz-o na página de verificação para activares a tua conta.
++
++Se não foste tu que criaste esta conta, ignora este email.
++
++DigiMart · Evolure Labs`;
++
++  const html = `<!doctype html>
++<html lang="pt">
++<body style="margin:0;padding:24px;background:#0b0f19;font-family:Arial,Helvetica,sans-serif;color:#e5e7eb;">
++  <div style="max-width:480px;margin:0 auto;background:#111827;border-radius:12px;padding:32px;line-height:1.6;font-size:15px;">
++    <p style="margin-top:0;font-size:18px;"><strong>${escapeHtml(greeting)}</strong></p>
++    <p>Usa este código para verificares a tua conta no DigiMart:</p>
++    <p style="text-align:center;margin:28px 0;">
++      <span style="display:inline-block;background:#0b0f19;border:1px solid #1e2d45;border-radius:8px;padding:14px 24px;font-size:32px;letter-spacing:8px;font-family:'Courier New',monospace;color:#1fb57a;font-weight:bold;">${escapeHtml(code)}</span>
++    </p>
++    <p>O código é válido durante 24 horas.</p>
++    <p style="color:#9ca3af;font-size:13px;margin-bottom:0;">Se não foste tu que criaste esta conta, ignora este email.</p>
++  </div>
++</body>
++</html>`;
++
++  try {
++    const res = await fetch(RESEND_URL, {
++      method: "POST",
++      headers: {
++        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        from: process.env.EMAIL_FROM,
++        to: [to],
++        subject: `O teu código de verificação DigiMart: ${code}`,
++        html,
++        text,
++        ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
++      }),
++    });
++
++    if (!res.ok) {
++      console.error("Resend falhou:", res.status, await res.text());
++      return false;
++    }
++    return true;
++  } catch (err) {
++    console.error("Erro ao contactar o Resend:", err);
++    return false;
++  }
++}
+diff --git a/src/lib/verification.ts b/src/lib/verification.ts
+new file mode 100644
+index 0000000..a7eb2aa
+--- /dev/null
++++ b/src/lib/verification.ts
+@@ -0,0 +1,22 @@
++import { randomInt } from "node:crypto";
++import { db as prisma } from "@/lib/prisma";
++
++export const CODE_TTL_MS = 24 * 60 * 60 * 1000; // o código vale 24h
++export const RESEND_COOLDOWN_MS = 60 * 1000; // espera mínima entre dois envios
++
++/**
++ * Gera um código de 6 dígitos criptograficamente seguro.
++ * O campo verificationCode é @unique, por isso confirma que não está em uso
++ * (evita um erro 500 raro quando dois utilizadores recebem o mesmo código).
++ */
++export async function generateUniqueCode(): Promise<string> {
++  for (let i = 0; i < 10; i++) {
++    const code = randomInt(100000, 1000000).toString();
++    const exists = await prisma.user.findFirst({
++      where: { verificationCode: code },
++      select: { id: true },
++    });
++    if (!exists) return code;
++  }
++  throw new Error("Não foi possível gerar um código único");
++}

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/utils";
+
 import Link from "next/link";
 
 interface Stats {
@@ -28,19 +29,6 @@ interface Stats {
   totalDownloads: number;
   verifiedUsers: number;
   unverifiedUsers: number;
-}
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  username: string;
-  whatsapp: string;
-  isVerified: boolean;
-  isAdmin: boolean;
-  verificationCode: string | null;
-  createdAt: string;
-  _count: { products: number };
 }
 
 interface AdminProduct {
@@ -53,12 +41,11 @@ interface AdminProduct {
   seller: { name: string; username: string };
 }
 
-export default function AdminPage() {
+export default function AdminProductPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
 
   useEffect(() => {
@@ -72,87 +59,18 @@ export default function AdminPage() {
 
   async function fetchData() {
     try {
-      const res = await fetch("/api/admin");
+      const res = await fetch("/api/admin/products");
       if (!res.ok) {
         toast.error("Erro ao carregar dados");
         return;
       }
       const data = await res.json();
       setStats(data.stats);
-      setUsers(data.recentUsers);
       setProducts(data.recentProducts);
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function toggleUserVerification(
-    userId: string,
-    currentStatus: boolean,
-  ) {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isVerified: !currentStatus }),
-      });
-
-      if (!res.ok) {
-        toast.error("Erro");
-        return;
-      }
-      toast.success(
-        `Utilizador ${!currentStatus ? "verificado" : "não verificado"}`,
-      );
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId ? { ...u, isVerified: !currentStatus } : u,
-        ),
-      );
-    } catch (error) {
-      toast.error("Erro");
-    }
-  }
-
-  async function toggleAdmin(userId: string, currentStatus: boolean) {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isAdmin: !currentStatus }),
-      });
-
-      if (!res.ok) {
-        toast.error("Erro");
-        return;
-      }
-      toast.success(`Admin ${!currentStatus ? "concedido" : "revogado"}`);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId ? { ...u, isAdmin: !currentStatus } : u,
-        ),
-      );
-    } catch (error) {
-      toast.error("Erro");
-    }
-  }
-
-  async function deleteUser(userId: string) {
-    if (!confirm("Tens a certeza?")) return;
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        toast.error("Erro");
-        return;
-      }
-      toast.success("Eliminado");
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-    } catch (error) {
-      toast.error("Erro");
     }
   }
 
@@ -225,15 +143,6 @@ export default function AdminPage() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
           <div className="bg-surface border border-border rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">
-              <Users className="h-5 w-5 text-teal" />
-              <span className="text-sm text-muted">Utilizadores</span>
-            </div>
-            <p className="font-bebas text-3xl text-foreground">
-              {stats.totalUsers}
-            </p>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
               <Package className="h-5 w-5 text-warn" />
               <span className="text-sm text-muted">Produtos</span>
             </div>
@@ -250,135 +159,8 @@ export default function AdminPage() {
               {stats.totalDownloads}
             </p>
           </div>
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <CheckCircle className="h-5 w-5 text-green" />
-              <span className="text-sm text-muted">Verificados</span>
-            </div>
-            <p className="font-bebas text-3xl text-green">
-              {stats.verifiedUsers}
-            </p>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <XCircle className="h-5 w-5 text-danger" />
-              <span className="text-sm text-muted">Pendentes</span>
-            </div>
-            <p className="font-bebas text-3xl text-danger">
-              {stats.unverifiedUsers}
-            </p>
-          </div>
         </div>
       )}
-
-      {/* Users */}
-      <div className="mb-10">
-        <div className="flex justify-between">
-          <h2 className="font-bebas text-2xl tracking-wide mb-6">
-            UTILIZADORES <span className="text-teal">RECENTES</span>
-          </h2>
-          <Link
-            href="/admin/users"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            ver todos
-          </Link>
-        </div>
-        <div className="bg-surface border border-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left font-mono text-xs uppercase tracking-wider text-muted px-6 py-4">
-                    Nome
-                  </th>
-                  <th className="text-left font-mono text-xs uppercase tracking-wider text-muted px-6 py-4">
-                    Email
-                  </th>
-                  <th className="text-left font-mono text-xs uppercase tracking-wider text-muted px-6 py-4">
-                    WhatsApp
-                  </th>
-                  <th className="text-left font-mono text-xs uppercase tracking-wider text-muted px-6 py-4">
-                    Produtos
-                  </th>
-                  <th className="text-left font-mono text-xs uppercase tracking-wider text-muted px-6 py-4">
-                    Estado
-                  </th>
-                  <th className="text-right font-mono text-xs uppercase tracking-wider text-muted px-6 py-4">
-                    Acções
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b border-border/50 last:border-b-0 hover:bg-background/50"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground text-sm">
-                          {user.name}
-                        </span>
-                        {user.isAdmin && (
-                          <Crown className="h-3.5 w-3.5 text-warn" />
-                        )}
-                      </div>
-                      <span className="text-xs text-muted">
-                        @{user.username}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted">
-                      {user.whatsapp}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {user._count.products}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={user.isVerified ? "green" : "warn"}>
-                        {user.isVerified ? "Verificado" : "Pendente"}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                          onClick={() =>
-                            toggleUserVerification(user.id, user.isVerified)
-                          }
-                        >
-                          {user.isVerified ? "Desverificar" : "Verificar"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                          onClick={() => toggleAdmin(user.id, user.isAdmin)}
-                        >
-                          {user.verificationCode}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-danger hover:text-danger hover:bg-danger/10"
-                          onClick={() => deleteUser(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
       {/* Products */}
       <div>

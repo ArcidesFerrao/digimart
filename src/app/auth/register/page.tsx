@@ -83,7 +83,11 @@ export default function RegisterPage() {
         return;
       }
 
-      toast.success("Conta criada com sucesso!");
+      toast.success(
+        data.emailSent === false
+          ? "Conta criada! Ao entrares, pede um novo código de verificação."
+          : "Conta criada! Enviámos um código de verificação para o teu email.",
+      );
       router.push("/auth/login");
     } catch (error) {
       toast.error("Erro ao criar conta");
