@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const { data: session, update } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [avatar, setAvatar] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -38,8 +39,14 @@ export default function SettingsPage() {
 
   async function fetchUser() {
     try {
-      const res = await fetch(`/api/sellers/${session?.user?.username}`);
-      if (!res.ok) return;
+      const res = await fetch(
+        `/api/sellers/${encodeURIComponent(session?.user?.username ?? "")}`
+      );
+      if (!res.ok) {
+        setLoadFailed(true);
+        return;
+      }
+      setLoadFailed(false);
       const data = await res.json();
       setFormData({
         name: data.name || "",
@@ -66,6 +73,10 @@ export default function SettingsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!session?.user?.id) return;
+    if (loadFailed) {
+      toast.error("Não foi possível carregar o teu perfil. Recarrega a página.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -232,7 +243,7 @@ export default function SettingsPage() {
 
         {/* Submit */}
         <div className="pt-4">
-          <Button type="submit" size="lg" className="w-full gap-2" disabled={saving}>
+          <Button type="submit" size="lg" className="w-full gap-2" disabled={saving || loadFailed}>
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />

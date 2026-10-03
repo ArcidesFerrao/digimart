@@ -31,7 +31,7 @@ export default async function DashboardLayout({
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/products/new", label: "Novo Produto", icon: Plus },
     { href: "/dashboard/links", label: "Links de Download", icon: Link2 },
-    { href: `/sellers/${session.user.username}`, label: "Loja Pública", icon: Store },
+    { href: `/sellers/${encodeURIComponent(session.user.username)}`, label: "Loja Pública", icon: Store },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings },
   ];
 

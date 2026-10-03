@@ -215,7 +215,7 @@ export default async function ProductPage({ params }: Props) {
               </div>
               <div>
                 <Link
-                  href={`/sellers/${product.seller.username}`}
+                  href={`/sellers/${encodeURIComponent(product.seller.username)}`}
                   className="font-semibold text-foreground hover:text-teal transition-colors"
                 >
                   {product.seller.name}

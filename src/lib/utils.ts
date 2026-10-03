@@ -18,3 +18,15 @@ export function generateWhatsAppLink(phone: string, productName: string, price: 
   const message = `Olá, tenho interesse no produto "${productName}" por ${formatPrice(price)}. Como posso efectuar o pagamento?`;
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Descodifica um parâmetro de URL (ex: "Mika%20Merlin" -> "Mika Merlin").
+ * É seguro chamar em valores já descodificados: se falhar, devolve o original.
+ */
+export function decodeParam(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}

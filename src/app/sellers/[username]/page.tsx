@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { db as prisma } from "@/lib/prisma";
+import { decodeParam } from "@/lib/utils";
 import { ProductGrid } from "@/components/products/product-grid";
 import { User, MessageCircle, Package } from "lucide-react";
 import {
@@ -12,7 +13,7 @@ import {
 
 async function getSeller(username: string) {
   return prisma.user.findUnique({
-    where: { username },
+    where: { username: decodeParam(username) },
     select: {
       id: true,
       name: true,
