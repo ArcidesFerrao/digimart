@@ -7,7 +7,15 @@ const registerSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  username: z.string().min(3),
+  username: z
+    .string()
+    .trim()
+    .min(3, "O username deve ter pelo menos 3 caracteres")
+    .max(30, "O username não pode ter mais de 30 caracteres")
+    .regex(
+      /^[A-Za-z0-9_]+$/,
+      "O username só pode ter letras, números e _ (sem espaços)"
+    ),
   whatsapp: z.string().min(9),
 });
 
@@ -68,7 +76,10 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: error.errors[0]?.message ?? "Dados inválidos" },
+        { status: 400 }
+      );
     }
     return NextResponse.json(
       { error: "Erro ao criar conta" },

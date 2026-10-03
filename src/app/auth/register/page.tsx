@@ -33,7 +33,12 @@ export default function RegisterPage() {
 
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "whatsapp" ? value.replace(/\D/g, "") : value,
+      [name]:
+        name === "whatsapp"
+          ? value.replace(/\D/g, "")
+          : name === "username"
+            ? value.replace(/[^A-Za-z0-9_]/g, "")
+            : value,
     }));
   }
 
@@ -42,6 +47,11 @@ export default function RegisterPage() {
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("As passwords não coincidem");
+      return;
+    }
+
+    if (formData.username.length < 3) {
+      toast.error("O username deve ter pelo menos 3 caracteres");
       return;
     }
 
@@ -125,8 +135,12 @@ export default function RegisterPage() {
                 placeholder="anasilva"
                 value={formData.username}
                 onChange={handleChange}
+                maxLength={30}
                 required
               />
+              <p className="text-xs text-muted mt-1">
+                Letras, números e _ (sem espaços)
+              </p>
             </div>
           </div>
 
