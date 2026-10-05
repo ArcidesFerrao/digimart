@@ -50,9 +50,9 @@ export default function VerifyPage() {
       }
 
       toast.success("Conta verificada com sucesso!");
-      await update(); // o servidor lê o estado da base de dados
+      await update({ isVerified: true }); // o servidor lê o estado da base de dados
       router.push("/dashboard");
-      router.refresh();
+      // router.refresh();
     } catch (error) {
       toast.error("Erro ao verificar código");
     } finally {
@@ -123,8 +123,8 @@ export default function VerifyPage() {
               <div>
                 <p className="text-sm text-foreground font-medium">Email</p>
                 <p className="text-xs text-muted">
-                  Enviámos o código para o teu email ({session.user.email}).
-                  Se não o vires, verifica a pasta de spam.
+                  Enviámos o código para o teu email ({session.user.email}). Se
+                  não o vires, verifica a pasta de spam.
                 </p>
               </div>
             </div>

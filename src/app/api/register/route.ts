@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { generateUniqueCode, CODE_TTL_MS } from "@/lib/verification";
 import { sendVerificationEmail } from "@/lib/email";
+import { normalizeMzPhone } from "@/lib/phone";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -19,26 +20,45 @@ const registerSchema = z.object({
       /^[A-Za-z0-9_]+$/,
       "O username só pode ter letras, números e _ (sem espaços)"
     ),
-  whatsapp: z.string().min(9),
+  whatsapp: z
+  .string()
+  .transform((v, ctx) => {
+    const n = normalizeMzPhone(v);
+    if (!n) {
+      ctx.addIssue({ code: "custom", message: "Número de WhatsApp inválido" });
+      return z.NEVER;
+    }
+    return n;
+  }),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const validated = registerSchema.parse(body);
+    const parsed = registerSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+
+    const validated = parsed.data;
 
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
           { email: validated.email },
           { username: validated.username },
+          { whatsapp: validated.whatsapp },
         ],
       },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "Email ou username já existe" },
+        { error: "Email, username ou número de WhatsApp já existe" },
         { status: 400 }
       );
     }
@@ -50,7 +70,6 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.create({
       data: {
         ...validated,
-        whatsapp: validated.whatsapp.trim(),
         password: hashedPassword,
         verificationCode,
         verificationExpires,
