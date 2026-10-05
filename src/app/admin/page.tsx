@@ -223,33 +223,43 @@ export default function AdminPage() {
 
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <Users className="h-5 w-5 text-teal" />
-              <span className="text-sm text-muted">Utilizadores</span>
+          <Link
+            href="/admin/users"
+            // className="text-sm text-muted hover:text-foreground"
+          >
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <Users className="h-5 w-5 text-teal" />
+                <span className="text-sm text-muted">Utilizadores</span>
+              </div>
+              <p className="font-bebas text-3xl text-foreground">
+                {stats.totalUsers}
+              </p>
             </div>
-            <p className="font-bebas text-3xl text-foreground">
-              {stats.totalUsers}
-            </p>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <Package className="h-5 w-5 text-warn" />
-              <span className="text-sm text-muted">Produtos</span>
+          </Link>
+          <Link href="/admin/products">
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <Package className="h-5 w-5 text-warn" />
+                <span className="text-sm text-muted">Produtos</span>
+              </div>
+              <p className="font-bebas text-3xl text-warn">
+                {stats.totalProducts}
+              </p>
             </div>
-            <p className="font-bebas text-3xl text-warn">
-              {stats.totalProducts}
-            </p>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <Download className="h-5 w-5 text-green" />
-              <span className="text-sm text-muted">Downloads</span>
+          </Link>
+          <Link href="/admin/funnel">
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <Download className="h-5 w-5 text-green" />
+                <span className="text-sm text-muted">Downloads</span>
+              </div>
+              <p className="font-bebas text-3xl text-green">
+                {stats.totalDownloads}
+              </p>
             </div>
-            <p className="font-bebas text-3xl text-green">
-              {stats.totalDownloads}
-            </p>
-          </div>
+          </Link>
+
           <div className="bg-surface border border-border rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">
               <CheckCircle className="h-5 w-5 text-green" />
@@ -277,12 +287,6 @@ export default function AdminPage() {
           <h2 className="font-bebas text-2xl tracking-wide mb-6">
             UTILIZADORES <span className="text-teal">RECENTES</span>
           </h2>
-          <Link
-            href="/admin/users"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            ver todos
-          </Link>
         </div>
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -386,12 +390,6 @@ export default function AdminPage() {
           <h2 className="font-bebas text-2xl tracking-wide mb-6">
             PRODUTOS <span className="text-teal">RECENTES</span>
           </h2>
-          <Link
-            href="/admin/products"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            ver todos
-          </Link>
         </div>
 
         <div className="bg-surface border border-border rounded-xl overflow-hidden">

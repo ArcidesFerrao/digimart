@@ -18,6 +18,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { Category } from "@prisma/client";
+import { TrackView } from "@/components/TrackView";
 
 async function getProduct(id: string) {
   return prisma.product.findUnique({
@@ -116,6 +117,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <TrackView productId={product.id} />
       <Link
         href="/products"
         className="inline-flex items-center gap-2 text-sm text-muted hover:text-teal transition-colors mb-8"
@@ -259,15 +261,15 @@ export default async function ProductPage({ params }: Props) {
                 target="_blank"
                 rel="noopener"
                 // size="lg"
-                className="w-full gap-2 text-base"
+                className="w-full gap-2 text-base h-12 px-6 inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal disabled:pointer-events-none disabled:opacity-50 bg-teal text-background hover:bg-teal-dim"
               >
                 <MessageCircle className="h-5 w-5" />
                 Comprar pelo WhatsApp
               </a>
-              <Button size="lg" className="w-full gap-2 text-base">
+              {/* <Button size="lg" className="w-full gap-2 text-base">
                 <MessageCircle className="h-5 w-5" />
                 Comprar via WhatsApp
-              </Button>
+              </Button> */}
             </a>
             <p className="text-xs text-muted text-center">
               Fala com o vendedor para combinar o pagamento e receber o produto.

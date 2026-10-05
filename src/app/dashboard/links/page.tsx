@@ -52,6 +52,7 @@ export default function LinksPage() {
     buyerName: "",
     expiresInHours: "48",
     maxDownloads: "3",
+    ref: "",
   });
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export default function LinksPage() {
           buyerName: formData.buyerName || undefined,
           expiresInHours: parseInt(formData.expiresInHours),
           maxDownloads: parseInt(formData.maxDownloads),
+          ref: formData.ref || undefined,
         }),
       });
 
@@ -133,6 +135,7 @@ export default function LinksPage() {
         buyerName: "",
         expiresInHours: "48",
         maxDownloads: "3",
+        ref: "",
       });
     } catch (error) {
       toast.error("Erro ao criar link");
@@ -200,6 +203,17 @@ export default function LinksPage() {
           </div>
         ) : (
           <form onSubmit={handleCreate} className="space-y-4">
+            <input
+              value={formData.ref}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  ref: e.target.value.trim().toUpperCase(),
+                })
+              }
+              placeholder="Ref do pedido (ex: K7M2QX)"
+              maxLength={6}
+            />
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
