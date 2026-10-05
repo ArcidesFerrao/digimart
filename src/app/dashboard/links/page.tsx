@@ -203,7 +203,7 @@ export default function LinksPage() {
           </div>
         ) : (
           <form onSubmit={handleCreate} className="space-y-4">
-            <input
+            <Input
               value={formData.ref}
               onChange={(e) =>
                 setFormData({
