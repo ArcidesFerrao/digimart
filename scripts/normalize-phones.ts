@@ -1,6 +1,10 @@
-// scripts/normalize-phones.ts
+import { config } from "dotenv";
+
 import { db as prisma } from "@/lib/prisma";
 import { normalizeMzPhone } from "@/lib/phone";
+
+config({ path: ".env" });
+config();
 
 async function main() {
   const users = await prisma.user.findMany({

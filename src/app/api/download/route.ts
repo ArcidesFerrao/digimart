@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { track } from "@/lib/track";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { productId, buyerPhone, buyerName, expiresInHours = 48, maxDownloads = 3 } = await req.json();
+    const { productId, buyerPhone, buyerName, ref, expiresInHours = 48, maxDownloads = 3 } = await req.json();
 
     if (!productId) {
       return NextResponse.json({ error: "Product ID é obrigatório" }, { status: 400 });
@@ -42,10 +43,18 @@ export async function POST(req: NextRequest) {
         sellerId: session.user.id,
         buyerPhone: buyerPhone || null,
         buyerName: buyerName || null,
+        ref: ref || null,  
         expiresAt,
         maxDownloads,
       },
     });
+
+    await track({
+  type: "LINK_GENERATED",
+  productId,
+  ref: ref || undefined,
+  userId: session.user.id,
+});
 
     const downloadUrl = `${process.env.NEXTAUTH_URL}/api/download/${downloadLink.token}`;
 

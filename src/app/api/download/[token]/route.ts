@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/prisma";
+import { isBot, track } from "@/lib/track";
 
 function errorPage(title: string, message: string, color: string): string {
   return `<!DOCTYPE html>
@@ -19,17 +20,22 @@ export async function GET(
   req: NextRequest,
   { params }:  { params: Promise<{ token: string }> }
 ) {
+  const { token } = await params;
   try {
     const link = await prisma.downloadLink.findUnique({
-      where: { token: (await params).token },
+      where: { token },
       include: { product: true },
     });
 
+    
     if (!link) {
       return new NextResponse(
         errorPage("Link Inválido", "Este link de download não existe ou foi removido.", "#FF4D6D"),
         { status: 404, headers: { "Content-Type": "text/html" } }
       );
+    }
+    if (!isBot(req.headers.get("user-agent"))) {
+      await track({ type: "DOWNLOAD", productId: link.productId, ref: link.ref ?? undefined });
     }
 
     if (!link.isActive) {
@@ -58,7 +64,7 @@ export async function GET(
       data: { downloadCount: { increment: 1 } },
     });
 
-    return Response.redirect(link.product.fileUrl!, 302);
+    return NextResponse.redirect(link.product.fileUrl!, 302);
   } catch (error) {
     console.error(error);
     return new NextResponse(

@@ -121,7 +121,8 @@ export default function LinksPage() {
           isActive: true,
           createdAt: new Date().toISOString(),
           product: {
-            title: products.find((p) => p.id === formData.productId)?.title || "",
+            title:
+              products.find((p) => p.id === formData.productId)?.title || "",
           },
         },
         ...prev,
@@ -150,6 +151,7 @@ export default function LinksPage() {
   function generateWhatsAppMessage(link: DownloadLink): string {
     const productName = link.product.title;
     const url = `${window.location.origin}/api/download/${link.token}`;
+
     return `Olá! Aqui está o teu link de download para "${productName}":\n\n${url}\n\nEste link expira em ${new Date(link.expiresAt).toLocaleDateString("pt-MZ")} e permite até ${link.maxDownloads} download(s).`;
   }
 
@@ -192,7 +194,8 @@ export default function LinksPage() {
           <div className="text-center py-8">
             <Package className="h-10 w-10 text-muted mx-auto mb-3" />
             <p className="text-muted text-sm">
-              Não tens produtos com ficheiro associado. Adiciona um ficheiro ao produto primeiro.
+              Não tens produtos com ficheiro associado. Adiciona um ficheiro ao
+              produto primeiro.
             </p>
           </div>
         ) : (
@@ -205,7 +208,10 @@ export default function LinksPage() {
                 <Select
                   value={formData.productId}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, productId: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      productId: e.target.value,
+                    }))
                   }
                   required
                 >
@@ -225,7 +231,10 @@ export default function LinksPage() {
                   placeholder="Ex: João Silva"
                   value={formData.buyerName}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, buyerName: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      buyerName: e.target.value,
+                    }))
                   }
                 />
               </div>
@@ -240,7 +249,10 @@ export default function LinksPage() {
                   placeholder="25884..."
                   value={formData.buyerPhone}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, buyerPhone: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      buyerPhone: e.target.value,
+                    }))
                   }
                 />
               </div>
@@ -251,7 +263,10 @@ export default function LinksPage() {
                 <Select
                   value={formData.expiresInHours}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, expiresInHours: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      expiresInHours: e.target.value,
+                    }))
                   }
                 >
                   <option value="24">24 horas</option>
@@ -267,7 +282,10 @@ export default function LinksPage() {
                 <Select
                   value={formData.maxDownloads}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, maxDownloads: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxDownloads: e.target.value,
+                    }))
                   }
                 >
                   <option value="1">1</option>
@@ -278,7 +296,11 @@ export default function LinksPage() {
               </div>
             </div>
 
-            <Button type="submit" disabled={creating || !formData.productId} className="gap-2">
+            <Button
+              type="submit"
+              disabled={creating || !formData.productId}
+              className="gap-2"
+            >
               {creating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -297,7 +319,9 @@ export default function LinksPage() {
         {links.length === 0 ? (
           <div className="bg-surface border border-border border-dashed rounded-xl p-12 text-center">
             <Link2 className="h-10 w-10 text-muted mx-auto mb-3" />
-            <p className="text-muted text-sm">Ainda não geraste nenhum link de download.</p>
+            <p className="text-muted text-sm">
+              Ainda não geraste nenhum link de download.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -331,16 +355,17 @@ export default function LinksPage() {
                           {isExpired
                             ? "Expirado"
                             : isExhausted
-                            ? "Esgotado"
-                            : !link.isActive
-                            ? "Inactivo"
-                            : "Activo"}
+                              ? "Esgotado"
+                              : !link.isActive
+                                ? "Inactivo"
+                                : "Activo"}
                         </Badge>
                       </div>
                       <p className="text-xs text-muted mb-2">
                         {link.buyerName && `${link.buyerName} · `}
                         {link.buyerPhone && `${link.buyerPhone} · `}
-                        {link.downloadCount}/{link.maxDownloads} downloads · Expira:{" "}
+                        {link.downloadCount}/{link.maxDownloads} downloads ·
+                        Expira:{" "}
                         {new Date(link.expiresAt).toLocaleDateString("pt-MZ", {
                           day: "numeric",
                           month: "short",
@@ -370,11 +395,13 @@ export default function LinksPage() {
 
                       <a
                         href={`https://wa.me/${link.buyerPhone?.replace(/\D/g, "") || ""}?text=${encodeURIComponent(
-                          generateWhatsAppMessage(link)
+                          generateWhatsAppMessage(link),
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={!link.buyerPhone ? "pointer-events-none" : ""}
+                        className={
+                          !link.buyerPhone ? "pointer-events-none" : ""
+                        }
                       >
                         <Button
                           variant="outline"
@@ -387,8 +414,16 @@ export default function LinksPage() {
                         </Button>
                       </a>
 
-                      <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <a
+                        href={downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
                       </a>

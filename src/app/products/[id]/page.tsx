@@ -254,6 +254,16 @@ export default async function ProductPage({ params }: Props) {
               rel="noopener noreferrer"
               className="block"
             >
+              <a
+                href={`/api/products/${product.id}/whatsapp`}
+                target="_blank"
+                rel="noopener"
+                // size="lg"
+                className="w-full gap-2 text-base"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Comprar pelo WhatsApp
+              </a>
               <Button size="lg" className="w-full gap-2 text-base">
                 <MessageCircle className="h-5 w-5" />
                 Comprar via WhatsApp

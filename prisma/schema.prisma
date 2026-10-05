@@ -41,6 +41,7 @@ model Product {
   downloadLinks DownloadLink[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  productEvents ProductEvent[]
 }
 
 model DownloadLink {
@@ -51,6 +52,7 @@ model DownloadLink {
   seller        User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   buyerPhone    String?
   buyerName     String?
+  ref           String?
   token         String   @unique @default(cuid())
   expiresAt     DateTime
   maxDownloads  Int      @default(3)
@@ -59,9 +61,31 @@ model DownloadLink {
   createdAt     DateTime @default(now())
 }
 
+model ProductEvent {
+  id        String     @id @default(cuid())
+  type      FunnelStep
+  productId String
+  sessionId String? // cookie anónimo (VIEW e WHATSAPP_CLICK)
+  ref       String? // código do pedido, liga CLICK -> LINK -> DOWNLOAD
+  userId    String?
+  createdAt DateTime   @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, type, createdAt])
+  @@index([ref])
+}
+
 enum Category {
   EBOOK
   TEMPLATE
   COURSE
   OTHER
+}
+
+enum FunnelStep {
+  VIEW
+  WHATSAPP_CLICK
+  LINK_GENERATED
+  DOWNLOAD
 }
