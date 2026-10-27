@@ -50,11 +50,11 @@ export async function POST(req: NextRequest) {
     });
 
     await track({
-  type: "LINK_GENERATED",
-  productId,
-  ref: ref || undefined,
-  userId: session.user.id,
-});
+      type: "LINK_GENERATED",
+      productId,
+      ref: ref || undefined,
+      userId: session.user.id,
+    });
 
     const downloadUrl = `${process.env.NEXTAUTH_URL}/api/download/${downloadLink.token}`;
 

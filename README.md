@@ -15,6 +15,7 @@ Marketplace de produtos digitais para criadores moçambicanos — simples, local
 ## Funcionalidades
 
 ### MVP Completo
+
 - ✅ Registo e login de vendedores
 - ✅ **Verificação por código** — novo utilizador recebe código via WhatsApp/Email antes de poder vender
 - ✅ Criação e gestão de produtos digitais
@@ -37,6 +38,7 @@ Marketplace de produtos digitais para criadores moçambicanos — simples, local
 ## Fluxos de Compra
 
 ### Fluxo 1: WhatsApp Directo
+
 1. Comprador descobre o produto
 2. Clica "Comprar via WhatsApp"
 3. Vendedor recebe mensagem pré-preenchida
@@ -44,6 +46,7 @@ Marketplace de produtos digitais para criadores moçambicanos — simples, local
 5. Vendedor entrega o produto
 
 ### Fluxo 2: Pagamento Primeiro
+
 1. Comprador vê o produto
 2. Efectua pagamento via M-Pesa/e-Mola para o número do vendedor
 3. Guarda o comprovativo
@@ -51,6 +54,7 @@ Marketplace de produtos digitais para criadores moçambicanos — simples, local
 5. Vendedor confirma e envia link de download
 
 ### Fluxo 3: Link de Download (Vendedor)
+
 1. Vendedor vai ao Dashboard → Links de Download
 2. Selecciona o produto e preenche dados do comprador
 3. Gera link temporário (expira em 24-72h, limite de downloads)
@@ -89,10 +93,10 @@ UPLOADTHING_TOKEN="your-uploadthing-token"
 
 ## Contas de Teste (Seed)
 
-| Tipo | Email | Password |
-|------|-------|----------|
-| Admin | admin@digimart.mz | password123 |
-| Vendedor | ana@digimart.mz | password123 |
+| Tipo     | Email             | Password    |
+| -------- | ----------------- | ----------- |
+| Admin    | admin@digimart.mz | password123 |
+| Vendedor | ana@digimart.mz   | password123 |
 
 ## Estrutura do Projeto
 
@@ -154,6 +158,7 @@ digimart/
 ## Rotas
 
 ### Públicas
+
 - `/` — Landing page
 - `/products` — Listagem de produtos
 - `/products/[id]` — Detalhe do produto (com galeria)
@@ -161,11 +166,13 @@ digimart/
 - `/about` — Sobre a plataforma
 
 ### Autenticação
+
 - `/auth/login` — Login
 - `/auth/register` — Registo
 - `/verify` — Verificação de conta (código)
 
 ### Vendedor (requer verificação)
+
 - `/dashboard` — Painel do vendedor
 - `/dashboard/products/new` — Criar produto (4 imagens)
 - `/dashboard/products/[id]/edit` — Editar produto
@@ -173,6 +180,7 @@ digimart/
 - `/dashboard/settings` — Configurações do perfil
 
 ### Admin (requer isAdmin)
+
 - `/admin` — Painel de administração
 
 ## Próximos Passos
@@ -185,4 +193,4 @@ digimart/
 
 ---
 
-by Evolure Labs · MVP v1.0 · 2026
+by Evolure Labs · MVP v2.0 · 2026
