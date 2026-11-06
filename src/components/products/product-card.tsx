@@ -17,12 +17,13 @@ const categoryLabels: Record<string, string> = {
   OTHER: "Outro",
 };
 
-const categoryVariants: Record<string, "teal" | "warn" | "green" | "default"> = {
-  EBOOK: "teal",
-  TEMPLATE: "warn",
-  COURSE: "green",
-  OTHER: "default",
-};
+const categoryVariants: Record<string, "teal" | "warn" | "green" | "default"> =
+  {
+    EBOOK: "teal",
+    TEMPLATE: "warn",
+    COURSE: "green",
+    OTHER: "default",
+  };
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
@@ -35,6 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            unoptimized
           />
           <div className="absolute top-3 left-3">
             <Badge variant={categoryVariants[product.category] || "default"}>
@@ -47,8 +49,12 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.title}
           </h3>
           <div className="flex items-center justify-between">
-            <span className="text-teal font-bold text-lg">{formatPrice(product.price)}</span>
-            <span className="text-xs text-muted">por {product.seller.name}</span>
+            <span className="text-teal font-bold text-lg">
+              {formatPrice(product.price)}
+            </span>
+            <span className="text-xs text-muted">
+              por {product.seller.name}
+            </span>
           </div>
         </div>
       </div>
