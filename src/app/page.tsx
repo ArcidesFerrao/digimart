@@ -216,6 +216,7 @@ export default async function HomePage() {
                       alt={product.title}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      unoptimized
                     />
                   </div>
                   <div className="p-4">
