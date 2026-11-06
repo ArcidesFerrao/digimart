@@ -103,6 +103,7 @@ export default async function HomePage() {
                           alt={product.title}
                           fill
                           className="object-cover"
+                          unoptimized
                         />
                       </div>
                       <div className="p-3">
